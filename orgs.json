@@ -1,0 +1,5 @@
+[
+  {"id":"SOS","name":"SOS","icon":"🆘","cssClass":"org-sos","iconBg":"#FDE8E8","color":"#E02424","desc":"ארגון הצלה וחילוץ","email":"sos@example.com","pass":"sos123"},
+  {"id":"כלבייה 1","name":"כלבייה 1","icon":"🏠","cssClass":"org-k1","iconBg":"#EBF5FB","color":"#2E86C1","desc":"מקלט עירוני 1","email":"k1@example.com","pass":"k1123"},
+  {"id":"כלבייה 2","name":"כלבייה 2","icon":"🏡","cssClass":"org-k2","iconBg":"#F3F0FF","color":"#6D28D9","desc":"מקלט עירוני 2","email":"k2@example.com","pass":"k2123"}
+]

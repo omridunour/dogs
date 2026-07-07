@@ -456,12 +456,8 @@ const ALL_ENV=['בית קרקע עם חצר גדולה','בית עם חצר קט
 const STATUS_HE={available:'זמין',pending:'בתהליך',adopted:'אומץ'};
 const STATUS_CLASS={available:'badge-available',pending:'badge-pending',adopted:'badge-adopted'};
 
-// Organisations + credentials
-const ORGS=[
-  {id:'SOS',name:'SOS',icon:'🆘',cssClass:'org-sos',iconBg:'#FDE8E8',color:'#E02424',desc:'ארגון הצלה וחילוץ',email:'sos@example.com',pass:'sos123'},
-  {id:'כלבייה 1',name:'כלבייה 1',icon:'🏠',cssClass:'org-k1',iconBg:'#EBF5FB',color:'#2E86C1',desc:'מקלט עירוני 1',email:'k1@example.com',pass:'k1123'},
-  {id:'כלבייה 2',name:'כלבייה 2',icon:'🏡',cssClass:'org-k2',iconBg:'#F3F0FF',color:'#6D28D9',desc:'מקלט עירוני 2',email:'k2@example.com',pass:'k2123'},
-];
+// Organisations + credentials — loaded at runtime from orgs.json
+let ORGS=[];
 function orgInfo(id){return ORGS.find(o=>o.id===id)||ORGS[0];}
 function orgBadgeHtml(orgId){
   const o=orgInfo(orgId);
@@ -477,22 +473,25 @@ function ageGroup(s){
   const n=parseInt(m[1]);return n<=3?'צעיר':n<=7?'בוגר':'בכיר';
 }
 
-let dogs=Array.from({length:50},(_,i)=>{
-  const n=i+1, breed=rnd(BREEDS), size=rnd(SIZES), gender=Math.random()>.5?'זכר':'נקבה';
-  const ageY=rndInt(0,12);
-  const age=ageY===0?'גור (פחות משנה)':ageY===1?'שנה אחת':ageY+' שנים';
-  const st=rnd(['available','available','available','pending','adopted']);
-  const avatar=rnd(AVATARS), org=rnd(ORGS.map(o=>o.id));
-  const personality=rndSubset(ALL_PERSONALITY,2,4), env=rndSubset(ALL_ENV,1,3);
-  const medical=[...new Set([...rndSubset(['בריא','מסורס / עקר','מחוסן'],1,3),
-    ...(Math.random()>.7?rndSubset(['טיפול תרופתי','ניתוח עבר','מוגבלות פיזית'],0,1):[])])];
-  const d=new Date();
-  const date=new Date(d-rndInt(30,730)*86400000).toISOString().split('T')[0];
-  return{id:n,name:`כלב ${n}`,breed,size,gender,age,ageGroup:ageGroup(age),
-    status:st,avatar,shelter:org,personality,env,medical,medicalNotes:'',desc:'',date};
-});
-
+let dogs=[];
 let nextId=51;
+
+function genDogs(){
+  dogs=Array.from({length:50},(_,i)=>{
+    const n=i+1, breed=rnd(BREEDS), size=rnd(SIZES), gender=Math.random()>.5?'זכר':'נקבה';
+    const ageY=rndInt(0,12);
+    const age=ageY===0?'גור (פחות משנה)':ageY===1?'שנה אחת':ageY+' שנים';
+    const st=rnd(['available','available','available','pending','adopted']);
+    const avatar=rnd(AVATARS), org=rnd(ORGS.map(o=>o.id));
+    const personality=rndSubset(ALL_PERSONALITY,2,4), env=rndSubset(ALL_ENV,1,3);
+    const medical=[...new Set([...rndSubset(['בריא','מסורס / עקר','מחוסן'],1,3),
+      ...(Math.random()>.7?rndSubset(['טיפול תרופתי','ניתוח עבר','מוגבלות פיזית'],0,1):[])])];
+    const d=new Date();
+    const date=new Date(d-rndInt(30,730)*86400000).toISOString().split('T')[0];
+    return{id:n,name:`כלב ${n}`,breed,size,gender,age,ageGroup:ageGroup(age),
+      status:st,avatar,shelter:org,personality,env,medical,medicalNotes:'',desc:'',date};
+  });
+}
 
 // ============================================================
 // AUTH
@@ -796,7 +795,13 @@ function showToast(msg){
 // INIT
 // ============================================================
 pubPopulateBreeds();
-goPublic();
+fetch('orgs.json').then(r=>r.json()).then(orgs=>{
+  ORGS=orgs;
+  genDogs();
+  goPublic();
+}).catch(()=>{
+  showToast('⚠️ שגיאה בטעינת רשימת הארגונים');
+});
 </script>
 </body>
 </html>
