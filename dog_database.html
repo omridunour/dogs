@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>התאמת כלב — מאגר כלבים</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --moss:#2E5035;--moss-light:#3D6845;--sage:#7BA05B;
+  --cream:#F7F3EC;--warm:#FDFAF6;--terra:#C4622D;
+  --sand:#E8DCC8;--charcoal:#1C2321;--mid:#5A6360;--light:#9AA5A2;
+  --r:10px;
+}
+html,body{height:100%;font-family:'Heebo',sans-serif;color:var(--charcoal);direction:rtl;}
+body{display:flex;flex-direction:column;overflow:hidden;background:#F0EDE6;}
+
+/* ===================== SHARED TOPBAR ===================== */
+.topbar{background:var(--moss);display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:56px;flex-shrink:0;z-index:100;}
+.topbar-logo{font-weight:800;font-size:18px;color:white;cursor:pointer;}
+.topbar-logo span{color:#A8D88A;}
+.topbar-right{display:flex;gap:12px;align-items:center;}
+.tb-stat{font-size:12px;color:rgba(255,255,255,0.7);}
+.tb-stat strong{color:white;}
+.btn{padding:7px 16px;border-radius:18px;font-size:13px;font-weight:700;font-family:'Heebo',sans-serif;cursor:pointer;border:none;transition:all 0.15s;}
+.btn-ghost{background:rgba(255,255,255,0.12);color:white;border:1px solid rgba(255,255,255,0.2);}
+.btn-ghost:hover{background:rgba(255,255,255,0.22);}
+.btn-terra{background:var(--terra);color:white;}
+.btn-terra:hover{background:#A8521F;}
+.btn-moss{background:var(--moss);color:white;}
+.btn-moss:hover{background:var(--moss-light);}
+.btn-delete{background:#FAECE7;color:#712B13;border:1px solid #F0997B;}
+.btn-delete:hover{background:#F0997B;color:white;}
+.btn-sm{padding:5px 12px;font-size:12px;}
+.btn-clear{background:transparent;color:var(--terra);border:1px solid var(--terra);font-size:11px;padding:3px 10px;border-radius:12px;}
+.btn-clear:hover{background:var(--terra);color:white;}
+
+/* ===================== SCREENS ===================== */
+.screen{display:none;flex:1;flex-direction:column;overflow:hidden;}
+.screen.active{display:flex;}
+
+/* ===================== LOGIN MODAL ===================== */
+.login-overlay{position:fixed;inset:0;background:rgba(28,35,33,0.55);z-index:300;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px);}
+.login-overlay.open{display:flex;}
+.login-box{background:var(--warm);border-radius:16px;width:380px;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,0.22);}
+.login-header{background:var(--moss);padding:24px 28px;text-align:center;}
+.login-header h2{font-size:18px;font-weight:800;color:white;margin-bottom:4px;}
+.login-header p{font-size:12px;color:rgba(255,255,255,0.65);}
+.login-body{padding:28px;}
+.login-field{margin-bottom:16px;}
+.login-field label{display:block;font-size:11px;font-weight:700;color:var(--mid);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px;}
+.login-field input{width:100%;padding:10px 14px;border:1px solid var(--sand);border-radius:8px;font-family:'Heebo',sans-serif;font-size:13px;color:var(--charcoal);background:var(--cream);direction:rtl;outline:none;transition:border-color 0.2s;}
+.login-field input:focus{border-color:var(--sage);box-shadow:0 0 0 3px rgba(123,160,91,0.12);}
+.login-err{font-size:12px;color:#E02424;margin-bottom:12px;display:none;padding:8px 12px;background:#FDE8E8;border-radius:7px;}
+.login-err.show{display:block;}
+.login-footer{display:flex;gap:10px;}
+.login-cancel{flex:1;padding:11px;border-radius:10px;border:1px solid var(--sand);background:transparent;font-family:'Heebo',sans-serif;font-size:13px;font-weight:600;cursor:pointer;color:var(--mid);}
+.login-submit{flex:2;padding:11px;border-radius:10px;border:none;background:var(--moss);color:white;font-family:'Heebo',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:background 0.15s;}
+.login-submit:hover{background:var(--moss-light);}
+.login-orgs-hint{margin-bottom:18px;background:var(--cream);border-radius:8px;overflow:hidden;}
+.loh-row{display:flex;align-items:center;gap:10px;padding:9px 12px;border-bottom:1px solid var(--sand);}
+.loh-row:last-child{border-bottom:none;}
+.loh-icon{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
+
+/* ===================== PUBLIC SCREEN ===================== */
+.pub-app{display:flex;flex:1;overflow:hidden;}
+
+/* Filter panel */
+.filter-panel{width:210px;background:var(--warm);border-left:1px solid var(--sand);display:flex;flex-direction:column;flex-shrink:0;overflow:hidden;}
+.fp-header{padding:12px 14px 10px;border-bottom:1px solid var(--sand);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.fp-title{font-size:13px;font-weight:800;color:var(--charcoal);}
+.fp-body{flex:1;overflow-y:auto;padding:10px 14px 20px;}
+.fp-section{margin-bottom:14px;}
+.fp-section-label{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:0.07em;color:var(--light);margin-bottom:6px;}
+.fp-chips{display:flex;flex-wrap:wrap;gap:4px;}
+.fc{padding:4px 10px;border-radius:12px;font-size:11px;font-weight:600;border:1px solid var(--sand);background:var(--warm);color:var(--mid);cursor:pointer;transition:all 0.15s;user-select:none;}
+.fc:hover{border-color:var(--sage);color:var(--moss);}
+.fc.on{background:var(--moss);color:white;border-color:var(--moss);}
+.fp-select{width:100%;padding:7px 10px;border:1px solid var(--sand);border-radius:8px;font-family:'Heebo',sans-serif;font-size:12px;color:var(--charcoal);background:var(--warm);direction:rtl;outline:none;}
+
+/* Dog gallery */
+.gallery-wrap{flex:1;overflow-y:auto;padding:20px;}
+.gallery-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.gallery-title{font-size:14px;font-weight:800;color:var(--charcoal);}
+.gallery-count{font-size:12px;color:var(--light);}
+.gallery-search{padding:8px 13px;border:1px solid var(--sand);border-radius:20px;font-family:'Heebo',sans-serif;font-size:13px;background:var(--warm);color:var(--charcoal);direction:rtl;outline:none;width:220px;}
+.gallery-search:focus{border-color:var(--sage);}
+.gallery-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;}
+.dog-card-pub{background:var(--warm);border-radius:12px;border:1px solid var(--sand);overflow:hidden;transition:transform 0.15s,box-shadow 0.15s;cursor:pointer;}
+.dog-card-pub:hover{transform:translateY(-3px);box-shadow:0 10px 28px rgba(28,35,33,0.10);}
+.dog-card-top{height:110px;display:flex;align-items:center;justify-content:center;font-size:56px;background:var(--sand);}
+.dog-card-body{padding:12px 14px;}
+.dog-card-name{font-size:14px;font-weight:800;color:var(--charcoal);margin-bottom:2px;}
+.dog-card-breed{font-size:11px;color:var(--light);margin-bottom:8px;}
+.dog-card-tags{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px;}
+.dct{padding:2px 8px;border-radius:9px;font-size:10px;font-weight:600;background:#E8F0E9;color:var(--moss);}
+.dog-card-org{margin-top:6px;}
+.gallery-empty{grid-column:1/-1;padding:60px;text-align:center;color:var(--light);}
+.gallery-empty .ge-icon{font-size:48px;margin-bottom:12px;}
+
+/* ===================== ORG ADMIN SCREEN ===================== */
+.admin-app{display:flex;flex:1;overflow:hidden;}
+
+/* Admin sidebar */
+.admin-sidebar{width:280px;background:var(--warm);border-left:1px solid var(--sand);display:flex;flex-direction:column;flex-shrink:0;overflow:hidden;}
+.admin-sidebar-header{padding:14px;border-bottom:1px solid var(--sand);flex-shrink:0;}
+.admin-org-banner{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;margin-bottom:10px;}
+.aob-icon{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.aob-name{font-size:14px;font-weight:800;color:var(--charcoal);}
+.aob-desc{font-size:11px;color:var(--light);}
+.admin-search{width:100%;padding:8px 12px;border:1px solid var(--sand);border-radius:8px;font-family:'Heebo',sans-serif;font-size:12px;background:var(--cream);direction:rtl;outline:none;}
+.admin-search:focus{border-color:var(--sage);}
+.admin-filter-row{display:flex;gap:5px;margin-top:8px;flex-wrap:wrap;}
+.afc{padding:3px 9px;border-radius:10px;font-size:11px;font-weight:600;border:1px solid var(--sand);background:var(--warm);color:var(--mid);cursor:pointer;transition:all 0.12s;}
+.afc.on{background:var(--moss);color:white;border-color:var(--moss);}
+.dog-list{flex:1;overflow-y:auto;padding:6px;}
+.dog-list-item{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:8px;cursor:pointer;transition:background 0.12s;margin-bottom:2px;border-right:3px solid transparent;}
+.dog-list-item:hover{background:#EEE9E0;}
+.dog-list-item.active{background:#E8F0E9;border-right-color:var(--moss);}
+.dli-avatar{width:38px;height:38px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;background:var(--sand);}
+.dli-name{font-size:13px;font-weight:700;color:var(--charcoal);}
+.dli-meta{font-size:11px;color:var(--light);margin-top:1px;}
+.dli-badge{font-size:10px;padding:2px 7px;border-radius:7px;font-weight:700;flex-shrink:0;}
+.badge-available{background:#E8F0E9;color:var(--moss);}
+.badge-pending{background:#FAEEDA;color:#7A4800;}
+.badge-adopted{background:#EEEDFE;color:#3C3489;}
+.empty-list{padding:28px 12px;text-align:center;color:var(--light);font-size:12px;}
+
+/* Admin editor */
+.editor{flex:1;overflow-y:auto;background:var(--cream);}
+.editor-empty{height:100%;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;color:var(--light);}
+.editor-empty .big{font-size:52px;}
+.editor-header{background:var(--warm);border-bottom:1px solid var(--sand);padding:14px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10;}
+.editor-htitle{font-size:16px;font-weight:800;color:var(--charcoal);}
+.editor-actions{display:flex;gap:8px;}
+.editor-body{padding:24px;max-width:800px;}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.form-full{grid-column:1/-1;}
+.field{display:flex;flex-direction:column;gap:6px;}
+.field label{font-size:10px;font-weight:800;color:var(--mid);text-transform:uppercase;letter-spacing:0.07em;}
+.field input,.field select,.field textarea{padding:9px 13px;border:1px solid var(--sand);border-radius:8px;font-family:'Heebo',sans-serif;font-size:13px;color:var(--charcoal);background:var(--warm);direction:rtl;outline:none;width:100%;transition:border-color 0.2s;}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--sage);box-shadow:0 0 0 3px rgba(123,160,91,0.1);}
+.field textarea{resize:vertical;min-height:80px;}
+.sec-div{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;color:var(--light);margin:6px 0 2px;padding-bottom:8px;border-bottom:1px solid var(--sand);grid-column:1/-1;}
+.avatar-picker{grid-column:1/-1;display:flex;align-items:center;gap:16px;padding:14px;background:var(--warm);border-radius:var(--r);border:1px solid var(--sand);}
+.avatar-big{width:60px;height:60px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:34px;background:var(--sand);flex-shrink:0;}
+.avatar-label{font-size:11px;font-weight:600;color:var(--mid);margin-bottom:8px;}
+.avatar-options{display:flex;gap:7px;flex-wrap:wrap;}
+.av-opt{width:40px;height:40px;border-radius:7px;border:2px solid transparent;background:var(--sand);display:flex;align-items:center;justify-content:center;font-size:21px;cursor:pointer;transition:all 0.12s;}
+.av-opt:hover,.av-opt.sel{border-color:var(--moss);background:#E8F0E9;}
+.tag-group{display:flex;gap:5px;flex-wrap:wrap;}
+.tag-opt{padding:5px 12px;border-radius:13px;font-size:12px;font-weight:600;border:1px solid var(--sand);background:var(--warm);color:var(--mid);cursor:pointer;transition:all 0.12s;user-select:none;}
+.tag-opt:hover{border-color:var(--sage);color:var(--moss);}
+.tag-opt.on{background:var(--moss);color:white;border-color:var(--moss);}
+.tag-opt.on-amber{background:#EF9F27;color:white;border-color:#EF9F27;}
+
+/* ORG BADGES */
+.org-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:9px;font-size:10px;font-weight:700;}
+.org-sos{background:#FDE8E8;color:#9B1C1C;border:1px solid #F9A8A8;}
+.org-k1{background:#EBF5FB;color:#154360;border:1px solid #85C1E9;}
+.org-k2{background:#F3F0FF;color:#3730A3;border:1px solid #C4B5FD;}
+.org-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.org-sos .org-dot{background:#E02424;}
+.org-k1 .org-dot{background:#2E86C1;}
+.org-k2 .org-dot{background:#6D28D9;}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--charcoal);color:white;padding:10px 20px;border-radius:20px;font-size:13px;font-family:'Heebo',sans-serif;z-index:9999;opacity:0;transition:opacity 0.3s;pointer-events:none;}
+.toast.show{opacity:1;}
+::-webkit-scrollbar{width:4px;}::-webkit-scrollbar-track{background:transparent;}::-webkit-scrollbar-thumb{background:var(--sand);border-radius:4px;}
+</style>
+</head>
+<body>
+
+<!-- ===================== TOPBAR ===================== -->
+<div class="topbar">
+  <div class="topbar-logo" onclick="goPublic()">התאמת<span>כלב</span> · מאגר</div>
+  <div class="topbar-right" id="topbar-right">
+    <!-- filled by JS -->
+  </div>
+</div>
+
+<!-- ===================== PUBLIC SCREEN ===================== -->
+<div class="screen active" id="screen-public">
+  <div class="pub-app">
+
+    <!-- Filter panel -->
+    <div class="filter-panel">
+      <div class="fp-header">
+        <span class="fp-title">🔍 פילטרים</span>
+        <button class="btn-clear" onclick="pubClearFilters()">נקה</button>
+      </div>
+      <div class="fp-body">
+        <div class="fp-section">
+          <div class="fp-section-label">מין</div>
+          <div class="fp-chips">
+            <div class="fc" data-f="gender" data-v="זכר" onclick="pubToggle(this)">זכר</div>
+            <div class="fc" data-f="gender" data-v="נקבה" onclick="pubToggle(this)">נקבה</div>
+          </div>
+        </div>
+        <div class="fp-section">
+          <div class="fp-section-label">גודל / משקל</div>
+          <div class="fp-chips">
+            <div class="fc" data-f="size" data-v="קטן (עד 10 ק״ג)" onclick="pubToggle(this)">קטן</div>
+            <div class="fc" data-f="size" data-v="בינוני (10–25 ק״ג)" onclick="pubToggle(this)">בינוני</div>
+            <div class="fc" data-f="size" data-v="גדול (25–45 ק״ג)" onclick="pubToggle(this)">גדול</div>
+            <div class="fc" data-f="size" data-v="ענק (מעל 45 ק״ג)" onclick="pubToggle(this)">ענק</div>
+          </div>
+        </div>
+        <div class="fp-section">
+          <div class="fp-section-label">גיל</div>
+          <div class="fp-chips">
+            <div class="fc" data-f="ageGroup" data-v="גור" onclick="pubToggle(this)">גור</div>
+            <div class="fc" data-f="ageGroup" data-v="צעיר" onclick="pubToggle(this)">1–3 שנים</div>
+            <div class="fc" data-f="ageGroup" data-v="בוגר" onclick="pubToggle(this)">4–7 שנים</div>
+            <div class="fc" data-f="ageGroup" data-v="בכיר" onclick="pubToggle(this)">8+ שנים</div>
+          </div>
+        </div>
+        <div class="fp-section">
+          <div class="fp-section-label">גזע</div>
+          <select class="fp-select" id="pub-filter-breed" onchange="pubRender()">
+            <option value="">כל הגזעים</option>
+          </select>
+        </div>
+        <div class="fp-section">
+          <div class="fp-section-label">אופי</div>
+          <div class="fp-chips">
+            <div class="fc" data-f="personality" data-v="חברותי" onclick="pubToggle(this)">חברותי</div>
+            <div class="fc" data-f="personality" data-v="רגוע" onclick="pubToggle(this)">רגוע</div>
+            <div class="fc" data-f="personality" data-v="אנרגטי" onclick="pubToggle(this)">אנרגטי</div>
+            <div class="fc" data-f="personality" data-v="נאמן" onclick="pubToggle(this)">נאמן</div>
+            <div class="fc" data-f="personality" data-v="חכם" onclick="pubToggle(this)">חכם</div>
+            <div class="fc" data-f="personality" data-v="מגן" onclick="pubToggle(this)">מגן</div>
+            <div class="fc" data-f="personality" data-v="שובב" onclick="pubToggle(this)">שובב</div>
+            <div class="fc" data-f="personality" data-v="עצמאי" onclick="pubToggle(this)">עצמאי</div>
+            <div class="fc" data-f="personality" data-v="ביישן" onclick="pubToggle(this)">ביישן</div>
+            <div class="fc" data-f="personality" data-v="מסתגל בקלות" onclick="pubToggle(this)">מסתגל</div>
+          </div>
+        </div>
+        <div class="fp-section">
+          <div class="fp-section-label">סביבה מתאימה</div>
+          <div class="fp-chips">
+            <div class="fc" data-f="env" data-v="בית קרקע עם חצר גדולה" onclick="pubToggle(this)">חצר גדולה</div>
+            <div class="fc" data-f="env" data-v="בית עם חצר קטנה" onclick="pubToggle(this)">חצר קטנה</div>
+            <div class="fc" data-f="env" data-v="דירה גדולה" onclick="pubToggle(this)">דירה גדולה</div>
+            <div class="fc" data-f="env" data-v="דירה קטנה" onclick="pubToggle(this)">דירה קטנה</div>
+            <div class="fc" data-f="env" data-v="מתאים לילדים" onclick="pubToggle(this)">לילדים</div>
+            <div class="fc" data-f="env" data-v="מסתדר עם כלבים" onclick="pubToggle(this)">עם כלבים</div>
+            <div class="fc" data-f="env" data-v="מסתדר עם חתולים" onclick="pubToggle(this)">עם חתולים</div>
+            <div class="fc" data-f="env" data-v="מאמץ ראשוני בסדר" onclick="pubToggle(this)">מאמץ ראשוני</div>
+          </div>
+        </div>
+        <div class="fp-section">
+          <div class="fp-section-label">מצב רפואי</div>
+          <div class="fp-chips">
+            <div class="fc" data-f="medical" data-v="בריא" onclick="pubToggle(this)">בריא</div>
+            <div class="fc" data-f="medical" data-v="מסורס / עקר" onclick="pubToggle(this)">מסורס/עקר</div>
+            <div class="fc" data-f="medical" data-v="מחוסן" onclick="pubToggle(this)">מחוסן</div>
+          </div>
+        </div>
+        <div class="fp-section">
+          <div class="fp-section-label">ארגון</div>
+          <div class="fp-chips">
+            <div class="fc" data-f="org" data-v="SOS" onclick="pubToggle(this)"><span style="color:#E02424">●</span> SOS</div>
+            <div class="fc" data-f="org" data-v="כלבייה 1" onclick="pubToggle(this)"><span style="color:#2E86C1">●</span> כלבייה 1</div>
+            <div class="fc" data-f="org" data-v="כלבייה 2" onclick="pubToggle(this)"><span style="color:#6D28D9">●</span> כלבייה 2</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Gallery -->
+    <div class="gallery-wrap">
+      <div class="gallery-top">
+        <div>
+          <div class="gallery-title">כלבים זמינים לאימוץ</div>
+          <div class="gallery-count" id="pub-count"></div>
+        </div>
+        <input class="gallery-search" id="pub-search" type="text" placeholder="חפש שם או גזע..." oninput="pubRender()"/>
+      </div>
+      <div class="gallery-grid" id="gallery-grid"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ===================== ADMIN SCREEN ===================== -->
+<div class="screen" id="screen-admin">
+  <div class="admin-app">
+
+    <!-- Admin sidebar -->
+    <div class="admin-sidebar">
+      <div class="admin-sidebar-header">
+        <div class="admin-org-banner" id="admin-org-banner"></div>
+        <input class="admin-search" id="admin-search" type="text" placeholder="חפש שם או גזע..." oninput="adminRender()"/>
+        <div class="admin-filter-row">
+          <div class="afc on" data-s="available" onclick="adminToggleStatus(this)">זמין</div>
+          <div class="afc" data-s="pending" onclick="adminToggleStatus(this)">בתהליך</div>
+          <div class="afc" data-s="adopted" onclick="adminToggleStatus(this)">אומץ</div>
+        </div>
+      </div>
+      <div class="dog-list" id="admin-dog-list"></div>
+    </div>
+
+    <!-- Editor -->
+    <div class="editor" id="editor-panel">
+      <div class="editor-empty" id="empty-state">
+        <div class="big">🐾</div>
+        <p style="font-size:14px;color:var(--light);">בחר כלב לעריכה</p>
+        <p style="font-size:12px;color:var(--sand);">או לחץ "+ הוסף כלב"</p>
+      </div>
+      <div id="dog-editor" style="display:none;">
+        <div class="editor-header">
+          <div class="editor-htitle" id="editor-dog-title">עורך כלב</div>
+          <div class="editor-actions">
+            <button class="btn btn-delete btn-sm" onclick="deleteDog()">🗑 מחק</button>
+            <button class="btn btn-moss btn-sm" onclick="saveDog()">✓ שמור</button>
+          </div>
+        </div>
+        <div class="editor-body">
+          <div class="form-grid">
+            <div class="avatar-picker">
+              <div class="avatar-big" id="preview-avatar">🐕</div>
+              <div>
+                <div class="avatar-label">תמונה גנרית</div>
+                <div class="avatar-options" id="avatar-opts">
+                  <div class="av-opt" onclick="pickAvatar('🐕',this)">🐕</div>
+                  <div class="av-opt" onclick="pickAvatar('🐶',this)">🐶</div>
+                  <div class="av-opt" onclick="pickAvatar('🐩',this)">🐩</div>
+                  <div class="av-opt" onclick="pickAvatar('🦮',this)">🦮</div>
+                  <div class="av-opt" onclick="pickAvatar('🐕‍🦺',this)">🐕‍🦺</div>
+                  <div class="av-opt" onclick="pickAvatar('🐾',this)">🐾</div>
+                </div>
+              </div>
+            </div>
+            <div class="sec-div">פרטים בסיסיים</div>
+            <div class="field"><label>שם הכלב</label><input type="text" id="f-name"/></div>
+            <div class="field"><label>גזע</label><input type="text" id="f-breed"/></div>
+            <div class="field"><label>גיל</label><input type="text" id="f-age" placeholder="למשל: 3 שנים"/></div>
+            <div class="field"><label>מין</label>
+              <select id="f-gender"><option value="זכר">זכר</option><option value="נקבה">נקבה</option></select>
+            </div>
+            <div class="field"><label>משקל / גודל</label>
+              <select id="f-size">
+                <option value="קטן (עד 10 ק״ג)">קטן (עד 10 ק״ג)</option>
+                <option value="בינוני (10–25 ק״ג)">בינוני (10–25 ק״ג)</option>
+                <option value="גדול (25–45 ק״ג)">גדול (25–45 ק״ג)</option>
+                <option value="ענק (מעל 45 ק״ג)">ענק (מעל 45 ק״ג)</option>
+              </select>
+            </div>
+            <div class="field"><label>סטטוס</label>
+              <select id="f-status">
+                <option value="available">זמין לאימוץ</option>
+                <option value="pending">בתהליך אימוץ</option>
+                <option value="adopted">אומץ</option>
+              </select>
+            </div>
+            <div class="sec-div">מצב רפואי</div>
+            <div class="field form-full"><label>מצב רפואי</label>
+              <div class="tag-group" id="medical-tags">
+                <div class="tag-opt" onclick="toggleTag(this,'on')">בריא</div>
+                <div class="tag-opt" onclick="toggleTag(this,'on')">מסורס / עקר</div>
+                <div class="tag-opt" onclick="toggleTag(this,'on')">מחוסן</div>
+                <div class="tag-opt" onclick="toggleTag(this,'on')">טיפול תרופתי</div>
+                <div class="tag-opt" onclick="toggleTag(this,'on')">ניתוח עבר</div>
+                <div class="tag-opt" onclick="toggleTag(this,'on')">מוגבלות פיזית</div>
+                <div class="tag-opt" onclick="toggleTag(this,'on-amber')">דורש בדיקה</div>
+              </div>
+            </div>
+            <div class="field form-full"><label>הערות רפואיות</label><textarea id="f-medical" placeholder="פרט מצב מיוחד..."></textarea></div>
+            <div class="sec-div">אופי וסביבה</div>
+            <div class="field form-full"><label>אופי כללי</label>
+              <div class="tag-group" id="personality-tags">
+                <div class="tag-opt" onclick="toggleTag(this,'on')">חברותי</div>
+                <div class="tag-opt" onclick="toggleTag(this,'on')">רגוע</div>
+                <div class="tag-opt" onclick="toggleTag(this,'on')">אנרגטי</div>
+                <div class="tag-opt" onclick="toggleTag(this,'on')">נאמן</div>
+                <div class="tag-opt" onclick="toggleTag(this,'on')">חכם</div>
+                <div class="tag-opt" onclick="toggleTag(this,'on')">מגן</div>
+                <div class="tag-opt" onclick="toggleTag(this,'on')">שובב</div>
+                <div class="tag-opt" onclick="toggleTag(this,'on')">עצמאי</div>
+                <div class="tag-opt" onclick="toggleTag(this,'on')">ביישן</div>
+                <div class="tag-opt" onclick="toggleTag(this,'on')">מסתגל בקלות</div>
+              </div>
+            </div>
+            <div class="field form-full"><label>סביבה מתאימה</label>
+              <div class="tag-group" id="env-tags">
+                <div class="tag-opt" onclick="toggleTag(this,'on')">בית קרקע עם חצר גדולה</div>
+                <div class="tag-opt" onclick="toggleTag(this,'on')">בית עם חצר קטנה</div>
+                <div class="tag-opt" onclick="toggleTag(this,'on')">דירה גדולה</div>
+                <div class="tag-opt" onclick="toggleTag(this,'on')">דירה קטנה</div>
+                <div class="tag-opt" onclick="toggleTag(this,'on')">סביבה כפרית</div>
+                <div class="tag-opt" onclick="toggleTag(this,'on')">מתאים לילדים</div>
+                <div class="tag-opt" onclick="toggleTag(this,'on')">מסתדר עם כלבים</div>
+                <div class="tag-opt" onclick="toggleTag(this,'on')">מסתדר עם חתולים</div>
+                <div class="tag-opt" onclick="toggleTag(this,'on')">מאמץ ראשוני בסדר</div>
+                <div class="tag-opt" onclick="toggleTag(this,'on')">מאמץ מנוסה בלבד</div>
+              </div>
+            </div>
+            <div class="field form-full"><label>תיאור חופשי</label><textarea id="f-desc" placeholder="ספר על הכלב..."></textarea></div>
+            <div class="sec-div">פרטי ארגון</div>
+            <div class="field"><label>תאריך קליטה</label><input type="date" id="f-date"/></div>
+            <div class="field"><label>ארגון</label><input type="text" id="f-shelter" readonly style="background:var(--cream);color:var(--mid);cursor:default;"/></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== LOGIN MODAL ===================== -->
+<div class="login-overlay" id="login-overlay">
+  <div class="login-box">
+    <div class="login-header">
+      <h2>🔐 כניסת ארגון</h2>
+      <p>ממשק ניהול לארגונים רשומים בלבד</p>
+    </div>
+    <div class="login-body">
+      <div class="login-orgs-hint" id="login-hint">
+        <div class="loh-row"><div class="loh-icon" style="background:#FDE8E8;">🆘</div><div style="font-size:12px;"><strong>SOS</strong> — sos@example.com</div></div>
+        <div class="loh-row"><div class="loh-icon" style="background:#EBF5FB;">🏠</div><div style="font-size:12px;"><strong>כלבייה 1</strong> — k1@example.com</div></div>
+        <div class="loh-row"><div class="loh-icon" style="background:#F3F0FF;">🏡</div><div style="font-size:12px;"><strong>כלבייה 2</strong> — k2@example.com</div></div>
+      </div>
+      <div class="login-field">
+        <label>אימייל</label>
+        <input type="email" id="login-email" placeholder="yourorg@example.com" onkeydown="if(event.key==='Enter')doLogin()"/>
+      </div>
+      <div class="login-field">
+        <label>סיסמה</label>
+        <input type="password" id="login-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"/>
+      </div>
+      <div class="login-err" id="login-err">אימייל או סיסמה שגויים. נסה שוב.</div>
+      <div class="login-footer">
+        <button class="login-cancel" onclick="closeLogin()">ביטול</button>
+        <button class="login-submit" onclick="doLogin()">כניסה →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ============================================================
+// DATA
+// ============================================================
+const BREEDS=['גולדן רטריבר','לברדור','פודל','ביגל','בולדוג','האסקי','מעורב','שפיץ',
+  'צ׳יוואווה','רוטוויילר','בורדר קולי','מלטז','ספניאל','דלמטי','בוקסר',
+  'בסנג׳י','שיבה אינו','קורגי','מגוש','שנאוצר','גרמני שפרד','סמויד','אקיטה','פינשר'];
+const SIZES=['קטן (עד 10 ק״ג)','בינוני (10–25 ק״ג)','גדול (25–45 ק״ג)','ענק (מעל 45 ק״ג)'];
+const AVATARS=['🐕','🐶','🐩','🦮','🐕‍🦺','🐾'];
+const ALL_PERSONALITY=['חברותי','רגוע','אנרגטי','נאמן','חכם','מגן','שובב','עצמאי','ביישן','מסתגל בקלות'];
+const ALL_ENV=['בית קרקע עם חצר גדולה','בית עם חצר קטנה','דירה גדולה','דירה קטנה',
+  'סביבה כפרית','מתאים לילדים','מסתדר עם כלבים','מסתדר עם חתולים','מאמץ ראשוני בסדר','מאמץ מנוסה בלבד'];
+const STATUS_HE={available:'זמין',pending:'בתהליך',adopted:'אומץ'};
+const STATUS_CLASS={available:'badge-available',pending:'badge-pending',adopted:'badge-adopted'};
+
+// Organisations + credentials
+const ORGS=[
+  {id:'SOS',name:'SOS',icon:'🆘',cssClass:'org-sos',iconBg:'#FDE8E8',color:'#E02424',desc:'ארגון הצלה וחילוץ',email:'sos@example.com',pass:'sos123'},
+  {id:'כלבייה 1',name:'כלבייה 1',icon:'🏠',cssClass:'org-k1',iconBg:'#EBF5FB',color:'#2E86C1',desc:'מקלט עירוני 1',email:'k1@example.com',pass:'k1123'},
+  {id:'כלבייה 2',name:'כלבייה 2',icon:'🏡',cssClass:'org-k2',iconBg:'#F3F0FF',color:'#6D28D9',desc:'מקלט עירוני 2',email:'k2@example.com',pass:'k2123'},
+];
+function orgInfo(id){return ORGS.find(o=>o.id===id)||ORGS[0];}
+function orgBadgeHtml(orgId){
+  const o=orgInfo(orgId);
+  return `<span class="org-badge ${o.cssClass}"><span class="org-dot"></span>${o.name}</span>`;
+}
+
+function rnd(arr){return arr[Math.floor(Math.random()*arr.length)];}
+function rndInt(a,b){return Math.floor(Math.random()*(b-a+1))+a;}
+function rndSubset(arr,mn,mx){return[...arr].sort(()=>Math.random()-0.5).slice(0,rndInt(mn,mx));}
+function ageGroup(s){
+  if(s.includes('גור'))return'גור';
+  const m=s.match(/(\d+)/);if(!m)return'בוגר';
+  const n=parseInt(m[1]);return n<=3?'צעיר':n<=7?'בוגר':'בכיר';
+}
+
+let dogs=Array.from({length:50},(_,i)=>{
+  const n=i+1, breed=rnd(BREEDS), size=rnd(SIZES), gender=Math.random()>.5?'זכר':'נקבה';
+  const ageY=rndInt(0,12);
+  const age=ageY===0?'גור (פחות משנה)':ageY===1?'שנה אחת':ageY+' שנים';
+  const st=rnd(['available','available','available','pending','adopted']);
+  const avatar=rnd(AVATARS), org=rnd(ORGS.map(o=>o.id));
+  const personality=rndSubset(ALL_PERSONALITY,2,4), env=rndSubset(ALL_ENV,1,3);
+  const medical=[...new Set([...rndSubset(['בריא','מסורס / עקר','מחוסן'],1,3),
+    ...(Math.random()>.7?rndSubset(['טיפול תרופתי','ניתוח עבר','מוגבלות פיזית'],0,1):[])])];
+  const d=new Date();
+  const date=new Date(d-rndInt(30,730)*86400000).toISOString().split('T')[0];
+  return{id:n,name:`כלב ${n}`,breed,size,gender,age,ageGroup:ageGroup(age),
+    status:st,avatar,shelter:org,personality,env,medical,medicalNotes:'',desc:'',date};
+});
+
+let nextId=51;
+
+// ============================================================
+// AUTH
+// ============================================================
+let currentOrg=null;
+
+function openLogin(){
+  document.getElementById('login-email').value='';
+  document.getElementById('login-pass').value='';
+  document.getElementById('login-err').classList.remove('show');
+  document.getElementById('login-overlay').classList.add('open');
+  setTimeout(()=>document.getElementById('login-email').focus(),100);
+}
+function closeLogin(){document.getElementById('login-overlay').classList.remove('open');}
+
+function doLogin(){
+  const email=document.getElementById('login-email').value.trim().toLowerCase();
+  const pass=document.getElementById('login-pass').value;
+  const org=ORGS.find(o=>o.email===email&&o.pass===pass);
+  if(!org){document.getElementById('login-err').classList.add('show');return;}
+  currentOrg=org;
+  closeLogin();
+  enterAdmin();
+}
+
+function logout(){
+  currentOrg=null;
+  goPublic();
+  showToast('👋 יצאת מהמערכת');
+}
+
+// ============================================================
+// SCREEN SWITCHING
+// ============================================================
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen-'+id).classList.add('active');
+}
+
+function goPublic(){
+  showScreen('public');
+  renderTopbarPublic();
+  pubRender();
+}
+
+function enterAdmin(){
+  showScreen('admin');
+  renderTopbarAdmin();
+  // org banner
+  const o=currentOrg;
+  document.getElementById('admin-org-banner').innerHTML=`
+    <div class="aob-icon" style="background:${o.iconBg}">${o.icon}</div>
+    <div><div class="aob-name">${o.name}</div><div class="aob-desc">${o.desc}</div></div>`;
+  // reset editor
+  activeId=null;
+  document.getElementById('empty-state').style.display='flex';
+  document.getElementById('dog-editor').style.display='none';
+  adminRender();
+  showToast(`✅ ברוך הבא, ${o.name}`);
+}
+
+function renderTopbarPublic(){
+  document.getElementById('topbar-right').innerHTML=`
+    <span class="tb-stat">זמינים: <strong>${dogs.filter(d=>d.status==='available').length}</strong></span>
+    <button class="btn btn-ghost" onclick="openLogin()">🔐 כניסת ארגון</button>`;
+}
+
+function renderTopbarAdmin(){
+  const o=currentOrg;
+  const myDogs=dogs.filter(d=>d.shelter===o.id);
+  document.getElementById('topbar-right').innerHTML=`
+    <span class="tb-stat">הכלבים שלי: <strong>${myDogs.length}</strong></span>
+    <span class="tb-stat">זמינים: <strong>${myDogs.filter(d=>d.status==='available').length}</strong></span>
+    <button class="btn btn-terra btn-sm" onclick="openAddDog()">+ הוסף כלב</button>
+    <button class="btn btn-ghost btn-sm" onclick="logout()">יציאה</button>`;
+}
+
+// ============================================================
+// PUBLIC GALLERY
+// ============================================================
+function pubToggle(el){el.classList.toggle('on');pubRender();}
+
+function pubClearFilters(){
+  document.querySelectorAll('#screen-public .fc').forEach(c=>c.classList.remove('on'));
+  document.getElementById('pub-filter-breed').value='';
+  document.getElementById('pub-search').value='';
+  pubRender();
+}
+
+function pubGetFilters(){
+  const f={gender:[],size:[],ageGroup:[],personality:[],env:[],medical:[],org:[]};
+  document.querySelectorAll('#screen-public .fc.on').forEach(el=>{
+    const k=el.dataset.f,v=el.dataset.v;if(f[k])f[k].push(v);
+  });
+  return f;
+}
+
+function pubRender(){
+  const q=(document.getElementById('pub-search').value||'').toLowerCase();
+  const breedF=document.getElementById('pub-filter-breed').value;
+  const f=pubGetFilters();
+  const grid=document.getElementById('gallery-grid');
+  grid.innerHTML='';
+  let count=0;
+  dogs.forEach(dog=>{
+    if(dog.status!=='available')return;
+    if(f.gender.length&&!f.gender.includes(dog.gender))return;
+    if(f.size.length&&!f.size.includes(dog.size))return;
+    if(f.ageGroup.length&&!f.ageGroup.includes(dog.ageGroup))return;
+    if(breedF&&dog.breed!==breedF)return;
+    if(f.personality.length&&!f.personality.every(p=>dog.personality.includes(p)))return;
+    if(f.env.length&&!f.env.every(e=>dog.env.includes(e)))return;
+    if(f.medical.length&&!f.medical.every(m=>dog.medical.includes(m)))return;
+    if(f.org.length&&!f.org.includes(dog.shelter))return;
+    if(q&&!dog.name.includes(q)&&!dog.breed.toLowerCase().includes(q))return;
+    count++;
+    const card=document.createElement('div');
+    card.className='dog-card-pub';
+    const topTags=dog.personality.slice(0,2).map(p=>`<span class="dct">${p}</span>`).join('');
+    card.innerHTML=`
+      <div class="dog-card-top">${dog.avatar}</div>
+      <div class="dog-card-body">
+        <div class="dog-card-name">${dog.name}</div>
+        <div class="dog-card-breed">${dog.breed} · ${dog.age} · ${dog.gender}</div>
+        <div class="dog-card-tags">${topTags}<span class="dct">${dog.size.split('(')[0].trim()}</span></div>
+        <div class="dog-card-org">${orgBadgeHtml(dog.shelter)}</div>
+      </div>`;
+    grid.appendChild(card);
+  });
+  if(count===0){
+    grid.innerHTML=`<div class="gallery-empty"><div class="ge-icon">🔍</div>לא נמצאו כלבים התואמים את הפילטרים</div>`;
+  }
+  document.getElementById('pub-count').textContent=count+' כלבים מוצגים';
+}
+
+function pubPopulateBreeds(){
+  const sel=document.getElementById('pub-filter-breed');
+  [...new Set(dogs.map(d=>d.breed))].sort().forEach(b=>{
+    const o=document.createElement('option');o.value=b;o.textContent=b;sel.appendChild(o);
+  });
+}
+
+// ============================================================
+// ADMIN — DOG LIST
+// ============================================================
+let activeId=null, currentAvatar='🐕';
+let adminStatusFilter=['available'];
+
+function adminToggleStatus(el){
+  const s=el.dataset.s;
+  if(adminStatusFilter.includes(s)) adminStatusFilter=adminStatusFilter.filter(x=>x!==s);
+  else adminStatusFilter.push(s);
+  el.classList.toggle('on',adminStatusFilter.includes(s));
+  adminRender();
+}
+
+function adminRender(){
+  if(!currentOrg)return;
+  const q=(document.getElementById('admin-search').value||'').toLowerCase();
+  const list=document.getElementById('admin-dog-list');
+  list.innerHTML='';
+  const myDogs=dogs.filter(d=>d.shelter===currentOrg.id);
+  let shown=0;
+  myDogs.forEach(dog=>{
+    if(adminStatusFilter.length&&!adminStatusFilter.includes(dog.status))return;
+    if(q&&!dog.name.includes(q)&&!dog.breed.toLowerCase().includes(q))return;
+    shown++;
+    const el=document.createElement('div');
+    el.className='dog-list-item'+(dog.id===activeId?' active':'');
+    el.id='dli-'+dog.id;
+    el.onclick=()=>openDog(dog.id);
+    el.innerHTML=`
+      <div class="dli-avatar">${dog.avatar}</div>
+      <div style="flex:1;min-width:0;">
+        <div class="dli-name">${dog.name}</div>
+        <div class="dli-meta">${dog.breed} · ${dog.age}</div>
+      </div>
+      <span class="dli-badge ${STATUS_CLASS[dog.status]}">${STATUS_HE[dog.status]}</span>`;
+    list.appendChild(el);
+  });
+  if(shown===0){
+    list.innerHTML=`<div class="empty-list">לא נמצאו כלבים</div>`;
+  }
+  renderTopbarAdmin();
+}
+
+// ============================================================
+// ADMIN — EDITOR
+// ============================================================
+function openDog(id){
+  activeId=id;
+  const dog=dogs.find(d=>d.id===id);if(!dog)return;
+  document.getElementById('empty-state').style.display='none';
+  document.getElementById('dog-editor').style.display='block';
+  document.getElementById('editor-dog-title').textContent=dog.name;
+  currentAvatar=dog.avatar;
+  document.getElementById('preview-avatar').textContent=dog.avatar;
+  document.querySelectorAll('#avatar-opts .av-opt').forEach(o=>o.classList.toggle('sel',o.textContent.trim()===dog.avatar));
+  document.getElementById('f-name').value=dog.name;
+  document.getElementById('f-breed').value=dog.breed;
+  document.getElementById('f-age').value=dog.age;
+  document.getElementById('f-gender').value=dog.gender;
+  document.getElementById('f-size').value=dog.size;
+  document.getElementById('f-status').value=dog.status;
+  document.getElementById('f-medical').value=dog.medicalNotes||'';
+  document.getElementById('f-desc').value=dog.desc||'';
+  document.getElementById('f-shelter').value=dog.shelter;
+  document.getElementById('f-date').value=dog.date||'';
+  setTagsFrom('#medical-tags',dog.medical);
+  setTagsFrom('#personality-tags',dog.personality);
+  setTagsFrom('#env-tags',dog.env);
+  document.querySelectorAll('.dog-list-item').forEach(e=>e.classList.remove('active'));
+  const el=document.getElementById('dli-'+id);
+  if(el){el.classList.add('active');el.scrollIntoView({block:'nearest'});}
+}
+
+function setTagsFrom(sel,arr){
+  document.querySelectorAll(sel+' .tag-opt').forEach(t=>{
+    const txt=t.textContent.trim();
+    t.classList.remove('on','on-amber');
+    if(arr.includes(txt)){txt==='דורש בדיקה'?t.classList.add('on-amber'):t.classList.add('on');}
+  });
+}
+
+function saveDog(){
+  if(!activeId)return;
+  const dog=dogs.find(d=>d.id===activeId);
+  dog.name=document.getElementById('f-name').value.trim()||dog.name;
+  dog.breed=document.getElementById('f-breed').value.trim();
+  dog.age=document.getElementById('f-age').value.trim();
+  dog.ageGroup=ageGroup(dog.age);
+  dog.gender=document.getElementById('f-gender').value;
+  dog.size=document.getElementById('f-size').value;
+  dog.status=document.getElementById('f-status').value;
+  dog.avatar=currentAvatar;
+  dog.medicalNotes=document.getElementById('f-medical').value;
+  dog.desc=document.getElementById('f-desc').value;
+  dog.date=document.getElementById('f-date').value;
+  dog.medical=getTags('#medical-tags');
+  dog.personality=getTags('#personality-tags');
+  dog.env=getTags('#env-tags');
+  document.getElementById('editor-dog-title').textContent=dog.name;
+  adminRender();
+  showToast('✅ השינויים נשמרו');
+}
+
+function getTags(sel){
+  return[...document.querySelectorAll(sel+' .tag-opt.on, '+sel+' .tag-opt.on-amber')].map(t=>t.textContent.trim());
+}
+
+function deleteDog(){
+  if(!activeId)return;
+  const dog=dogs.find(d=>d.id===activeId);
+  if(!confirm(`למחוק את ${dog.name}?`))return;
+  dogs=dogs.filter(d=>d.id!==activeId);
+  activeId=null;
+  document.getElementById('empty-state').style.display='flex';
+  document.getElementById('dog-editor').style.display='none';
+  adminRender();
+  showToast('🗑️ הכלב נמחק');
+}
+
+function openAddDog(){
+  if(!currentOrg)return;
+  const today=new Date().toISOString().split('T')[0];
+  const nd={id:nextId++,name:`כלב ${nextId-1}`,breed:'מעורב',size:'בינוני (10–25 ק״ג)',
+    gender:'זכר',age:'2 שנים',ageGroup:'צעיר',status:'available',avatar:'🐕',
+    personality:[],env:[],medical:['בריא'],medicalNotes:'',desc:'',shelter:currentOrg.id,date:today};
+  dogs.unshift(nd);
+  // show available so new dog appears
+  adminStatusFilter=['available'];
+  document.querySelectorAll('.afc').forEach(c=>c.classList.toggle('on',c.dataset.s==='available'));
+  adminRender();
+  openDog(nd.id);
+  showToast('➕ כלב חדש נוסף');
+}
+
+function pickAvatar(emoji,el){
+  currentAvatar=emoji;
+  document.getElementById('preview-avatar').textContent=emoji;
+  document.querySelectorAll('#avatar-opts .av-opt').forEach(o=>o.classList.remove('sel'));
+  el.classList.add('sel');
+}
+
+function toggleTag(el,cls){
+  const active=el.classList.contains('on')||el.classList.contains('on-amber');
+  el.classList.remove('on','on-amber');
+  if(!active)el.classList.add(cls);
+}
+
+// ============================================================
+// TOAST
+// ============================================================
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2400);
+}
+
+// ============================================================
+// INIT
+// ============================================================
+pubPopulateBreeds();
+goPublic();
+</script>
+</body>
+</html>
