@@ -63,6 +63,29 @@ body{display:flex;flex-direction:column;overflow:hidden;background:#F0EDE6;}
 .loh-row:last-child{border-bottom:none;}
 .loh-icon{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
 
+/* ===================== APP ROOT / AUTH GATE ===================== */
+.app-root{display:flex;flex-direction:column;flex:1;overflow:hidden;}
+.app-root.hidden{display:none;}
+.auth-gate{position:fixed;inset:0;background:linear-gradient(160deg,var(--moss) 0%,var(--charcoal) 100%);z-index:400;display:flex;align-items:center;justify-content:center;}
+.auth-gate.hidden{display:none;}
+.auth-box{background:var(--warm);border-radius:18px;width:380px;max-width:92vw;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,0.35);}
+.auth-header{padding:28px 28px 16px;text-align:center;}
+.auth-header h1{font-size:20px;font-weight:800;color:var(--charcoal);margin-bottom:4px;}
+.auth-header p{font-size:12px;color:var(--mid);}
+.auth-body{padding:0 28px 28px;max-height:80vh;overflow-y:auto;}
+.auth-provider-btn{width:100%;display:flex;align-items:center;justify-content:center;gap:10px;padding:11px;border-radius:10px;font-family:'Heebo',sans-serif;font-size:13px;font-weight:700;cursor:pointer;margin-bottom:10px;border:1px solid var(--sand);background:white;color:var(--charcoal);transition:background 0.15s;}
+.auth-provider-btn:hover{background:var(--cream);}
+.auth-provider-btn.fb{background:#1877F2;color:white;border-color:#1877F2;}
+.auth-provider-btn.fb:hover{background:#0F5FCB;}
+.auth-divider{display:flex;align-items:center;gap:10px;margin:16px 0;font-size:11px;color:var(--light);}
+.auth-divider::before,.auth-divider::after{content:'';flex:1;height:1px;background:var(--sand);}
+.auth-tabs{display:flex;margin-bottom:16px;border:1px solid var(--sand);border-radius:10px;overflow:hidden;}
+.auth-tab{flex:1;padding:8px;text-align:center;font-size:12px;font-weight:700;cursor:pointer;color:var(--mid);background:var(--cream);}
+.auth-tab.on{background:var(--moss);color:white;}
+.auth-err{font-size:12px;color:#E02424;margin-bottom:12px;display:none;padding:8px 12px;background:#FDE8E8;border-radius:7px;}
+.auth-err.show{display:block;}
+.auth-loading{text-align:center;padding:60px 0;color:white;font-size:13px;}
+
 /* ===================== PUBLIC SCREEN ===================== */
 .pub-app{display:flex;flex:1;overflow:hidden;}
 
@@ -172,6 +195,43 @@ body{display:flex;flex-direction:column;overflow:hidden;background:#F0EDE6;}
 </style>
 </head>
 <body>
+
+<!-- ===================== AUTH GATE ===================== -->
+<div class="auth-gate" id="auth-gate">
+  <div class="auth-box">
+    <div class="auth-header">
+      <h1>🐾 התאמת כלב</h1>
+      <p>יש להתחבר כדי לצפות במאגר הכלבים</p>
+    </div>
+    <div class="auth-body" id="auth-body">
+      <button class="auth-provider-btn" onclick="authSignInGoogle()">
+        <svg width="16" height="16" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3c-1.6 4.7-6.1 8-11.3 8-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.1 8 3.1l5.7-5.7C34.6 6 29.6 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.7-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.6 15.1 18.9 12 24 12c3.1 0 5.9 1.1 8 3.1l5.7-5.7C34.6 6 29.6 4 24 4 16.3 4 9.6 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.5 0 10.4-1.9 14.2-5.1l-6.6-5.4C29.6 35.4 27 36 24 36c-5.2 0-9.6-3.3-11.2-8l-6.6 5.1C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.2 4.2-4.1 5.6l6.6 5.4C41.5 36.3 44 30.8 44 24c0-1.3-.1-2.7-.4-3.5z"/></svg>
+        המשך עם Google
+      </button>
+      <button class="auth-provider-btn fb" onclick="authSignInFacebook()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M22 12c0-5.5-4.5-10-10-10S2 6.5 2 12c0 5 3.7 9.1 8.4 9.9v-7H7.9V12h2.5V9.8c0-2.5 1.5-3.9 3.8-3.9 1.1 0 2.2.2 2.2.2v2.5h-1.3c-1.2 0-1.6.8-1.6 1.6V12h2.8l-.4 2.9h-2.4v7C18.3 21.1 22 17 22 12z"/></svg>
+        המשך עם Facebook
+      </button>
+      <div class="auth-divider">או באימייל</div>
+      <div class="auth-tabs">
+        <div class="auth-tab on" id="auth-tab-signin" onclick="authSetMode('signin')">התחברות</div>
+        <div class="auth-tab" id="auth-tab-signup" onclick="authSetMode('signup')">הרשמה</div>
+      </div>
+      <div class="login-field">
+        <label>אימייל</label>
+        <input type="email" id="auth-email" placeholder="you@example.com" onkeydown="if(event.key==='Enter')authEmailSubmit()"/>
+      </div>
+      <div class="login-field">
+        <label>סיסמה</label>
+        <input type="password" id="auth-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')authEmailSubmit()"/>
+      </div>
+      <div class="auth-err" id="auth-err"></div>
+      <button class="login-submit" style="width:100%;" id="auth-submit-btn" onclick="authEmailSubmit()">התחברות →</button>
+    </div>
+  </div>
+</div>
+
+<div class="app-root hidden" id="app-root">
 
 <!-- ===================== TOPBAR ===================== -->
 <div class="topbar">
@@ -409,6 +469,8 @@ body{display:flex;flex-direction:column;overflow:hidden;background:#F0EDE6;}
   </div>
 </div>
 
+</div> <!-- /app-root -->
+
 <!-- ===================== LOGIN MODAL ===================== -->
 <div class="login-overlay" id="login-overlay">
   <div class="login-box">
@@ -441,7 +503,93 @@ body{display:flex;flex-direction:column;overflow:hidden;background:#F0EDE6;}
 
 <div class="toast" id="toast"></div>
 
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script>
+// ============================================================
+// SITE AUTH (Firebase — Google / Facebook / Email)
+// ============================================================
+const firebaseConfig={
+  apiKey:"AIzaSyBrvv2Yk3yLpC3sDHeucj_RUsfged3wiEI",
+  authDomain:"dogs-adopt.firebaseapp.com",
+  projectId:"dogs-adopt",
+  storageBucket:"dogs-adopt.firebasestorage.app",
+  messagingSenderId:"510987480814",
+  appId:"1:510987480814:web:6c94592b59572453eb8dff",
+  measurementId:"G-VL5R09ERNN"
+};
+firebase.initializeApp(firebaseConfig);
+const fbAuth=firebase.auth();
+let authMode='signin';
+let appStarted=false;
+
+function authSetMode(mode){
+  authMode=mode;
+  document.getElementById('auth-tab-signin').classList.toggle('on',mode==='signin');
+  document.getElementById('auth-tab-signup').classList.toggle('on',mode==='signup');
+  document.getElementById('auth-submit-btn').textContent=mode==='signin'?'התחברות →':'הרשמה →';
+  authClearError();
+}
+
+function authClearError(){
+  const e=document.getElementById('auth-err');
+  e.classList.remove('show');e.textContent='';
+}
+
+function authShowError(msg){
+  const e=document.getElementById('auth-err');
+  e.textContent=msg;e.classList.add('show');
+}
+
+function authFriendlyError(err){
+  const map={
+    'auth/invalid-email':'כתובת אימייל לא תקינה.',
+    'auth/user-not-found':'לא נמצא משתמש עם אימייל זה.',
+    'auth/wrong-password':'סיסמה שגויה.',
+    'auth/invalid-credential':'אימייל או סיסמה שגויים.',
+    'auth/email-already-in-use':'כתובת האימייל כבר רשומה במערכת.',
+    'auth/weak-password':'הסיסמה חייבת לכלול לפחות 6 תווים.',
+    'auth/popup-closed-by-user':'החלון נסגר לפני השלמת ההתחברות.',
+    'auth/operation-not-allowed':'שיטת התחברות זו לא מופעלת עדיין במערכת.'
+  };
+  return map[err.code]||('שגיאה: '+err.message);
+}
+
+function authSignInGoogle(){
+  authClearError();
+  fbAuth.signInWithPopup(new firebase.auth.GoogleAuthProvider()).catch(err=>authShowError(authFriendlyError(err)));
+}
+function authSignInFacebook(){
+  authClearError();
+  fbAuth.signInWithPopup(new firebase.auth.FacebookAuthProvider()).catch(err=>authShowError(authFriendlyError(err)));
+}
+function authEmailSubmit(){
+  authClearError();
+  const email=document.getElementById('auth-email').value.trim();
+  const pass=document.getElementById('auth-pass').value;
+  if(!email||!pass){authShowError('נא למלא אימייל וסיסמה.');return;}
+  const action=authMode==='signin'
+    ?fbAuth.signInWithEmailAndPassword(email,pass)
+    :fbAuth.createUserWithEmailAndPassword(email,pass);
+  action.catch(err=>authShowError(authFriendlyError(err)));
+}
+function authSignOut(){
+  fbAuth.signOut();
+}
+
+fbAuth.onAuthStateChanged(user=>{
+  const gate=document.getElementById('auth-gate');
+  const root=document.getElementById('app-root');
+  if(user){
+    gate.classList.add('hidden');
+    root.classList.remove('hidden');
+    if(!appStarted){appStarted=true;startApp();}
+  }else{
+    gate.classList.remove('hidden');
+    root.classList.add('hidden');
+  }
+});
+
 // ============================================================
 // DATA
 // ============================================================
@@ -556,7 +704,8 @@ function enterAdmin(){
 function renderTopbarPublic(){
   document.getElementById('topbar-right').innerHTML=`
     <span class="tb-stat">זמינים: <strong>${dogs.filter(d=>d.status==='available').length}</strong></span>
-    <button class="btn btn-ghost" onclick="openLogin()">🔐 כניסת ארגון</button>`;
+    <button class="btn btn-ghost" onclick="openLogin()">🔐 כניסת ארגון</button>
+    <button class="btn btn-ghost btn-sm" onclick="authSignOut()">יציאה מהאתר</button>`;
 }
 
 function renderTopbarAdmin(){
@@ -792,16 +941,18 @@ function showToast(msg){
 }
 
 // ============================================================
-// INIT
+// INIT (called once, after the visitor is authenticated)
 // ============================================================
-pubPopulateBreeds();
-fetch('orgs.json').then(r=>r.json()).then(orgs=>{
-  ORGS=orgs;
-  genDogs();
-  goPublic();
-}).catch(()=>{
-  showToast('⚠️ שגיאה בטעינת רשימת הארגונים');
-});
+function startApp(){
+  pubPopulateBreeds();
+  fetch('orgs.json').then(r=>r.json()).then(orgs=>{
+    ORGS=orgs;
+    genDogs();
+    goPublic();
+  }).catch(()=>{
+    showToast('⚠️ שגיאה בטעינת רשימת הארגונים');
+  });
+}
 </script>
 </body>
 </html>
