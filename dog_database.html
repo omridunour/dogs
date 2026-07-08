@@ -105,6 +105,14 @@ body{display:flex;flex-direction:column;overflow:hidden;background:#F0EDE6;}
 .auth-err{font-size:12px;color:#E02424;margin-bottom:12px;display:none;padding:8px 12px;background:#FDE8E8;border-radius:7px;}
 .auth-err.show{display:block;}
 .auth-loading{text-align:center;padding:60px 0;color:white;font-size:13px;}
+.auth-role-btn{width:100%;display:flex;align-items:center;gap:14px;padding:16px;border-radius:12px;font-family:'Heebo',sans-serif;cursor:pointer;margin-bottom:12px;border:1px solid var(--sand);background:white;color:var(--charcoal);transition:all 0.15s;text-align:right;}
+.auth-role-btn:hover{border-color:var(--moss);background:var(--cream);transform:translateY(-1px);}
+.auth-role-btn:last-child{margin-bottom:0;}
+.arb-icon{width:44px;height:44px;border-radius:10px;background:var(--cream);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;}
+.arb-title{font-size:14px;font-weight:800;color:var(--charcoal);}
+.arb-sub{font-size:11px;color:var(--light);margin-top:2px;}
+.auth-back-btn{background:none;border:none;color:var(--mid);font-family:'Heebo',sans-serif;font-size:12px;font-weight:700;cursor:pointer;padding:0 0 16px;display:block;}
+.auth-back-btn:hover{color:var(--moss);}
 
 /* ===================== PUBLIC SCREEN ===================== */
 .pub-app{display:flex;flex:1;overflow:hidden;}
@@ -248,9 +256,24 @@ body{display:flex;flex-direction:column;overflow:hidden;background:#F0EDE6;}
   <div class="auth-box">
     <div class="auth-header">
       <h1>🐾 התאמת כלב</h1>
-      <p>יש להתחבר כדי לצפות במאגר הכלבים</p>
+      <p id="auth-header-sub">איך תרצו להיכנס?</p>
     </div>
-    <div class="auth-body" id="auth-body">
+
+    <!-- ROLE CHOICE -->
+    <div class="auth-body" id="auth-role-choice">
+      <button class="auth-role-btn" onclick="authChooseRole('user')">
+        <div class="arb-icon">👤</div>
+        <div><div class="arb-title">משתמש פרטי</div><div class="arb-sub">חיפוש ואימוץ כלבים</div></div>
+      </button>
+      <button class="auth-role-btn" onclick="authChooseRole('org')">
+        <div class="arb-icon">🏢</div>
+        <div><div class="arb-title">ארגון</div><div class="arb-sub">ניהול כלבים לאימוץ</div></div>
+      </button>
+    </div>
+
+    <!-- PRIVATE USER LOGIN -->
+    <div class="auth-body" id="auth-body" style="display:none;">
+      <button class="auth-back-btn" onclick="authBackToRoles()">→ חזרה</button>
       <button class="auth-provider-btn" onclick="authSignInGoogle()">
         <svg width="16" height="16" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3c-1.6 4.7-6.1 8-11.3 8-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.1 8 3.1l5.7-5.7C34.6 6 29.6 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.7-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.6 15.1 18.9 12 24 12c3.1 0 5.9 1.1 8 3.1l5.7-5.7C34.6 6 29.6 4 24 4 16.3 4 9.6 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.5 0 10.4-1.9 14.2-5.1l-6.6-5.4C29.6 35.4 27 36 24 36c-5.2 0-9.6-3.3-11.2-8l-6.6 5.1C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.2 4.2-4.1 5.6l6.6 5.4C41.5 36.3 44 30.8 44 24c0-1.3-.1-2.7-.4-3.5z"/></svg>
         המשך עם Google
@@ -274,6 +297,26 @@ body{display:flex;flex-direction:column;overflow:hidden;background:#F0EDE6;}
       </div>
       <div class="auth-err" id="auth-err"></div>
       <button class="login-submit" style="width:100%;" id="auth-submit-btn" onclick="authEmailSubmit()">התחברות →</button>
+    </div>
+
+    <!-- ORGANIZATION LOGIN -->
+    <div class="auth-body" id="auth-org-body" style="display:none;">
+      <button class="auth-back-btn" onclick="authBackToRoles()">→ חזרה</button>
+      <div class="login-orgs-hint" id="gate-org-hint">
+        <div class="loh-row"><div class="loh-icon" style="background:#FDE8E8;">🆘</div><div style="font-size:12px;"><strong>SOS</strong> — sos@example.com</div></div>
+        <div class="loh-row"><div class="loh-icon" style="background:#EBF5FB;">🏠</div><div style="font-size:12px;"><strong>כלבייה 1</strong> — k1@example.com</div></div>
+        <div class="loh-row"><div class="loh-icon" style="background:#F3F0FF;">🏡</div><div style="font-size:12px;"><strong>כלבייה 2</strong> — k2@example.com</div></div>
+      </div>
+      <div class="login-field">
+        <label>אימייל</label>
+        <input type="email" id="gate-org-email" placeholder="yourorg@example.com" onkeydown="if(event.key==='Enter')gateOrgLogin()"/>
+      </div>
+      <div class="login-field">
+        <label>סיסמה</label>
+        <input type="password" id="gate-org-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')gateOrgLogin()"/>
+      </div>
+      <div class="login-err" id="gate-org-err">אימייל או סיסמה שגויים. נסה שוב.</div>
+      <button class="login-submit" style="width:100%;" onclick="gateOrgLogin()">כניסה כארגון →</button>
     </div>
   </div>
 </div>
@@ -673,7 +716,7 @@ fbAuth.onAuthStateChanged(user=>{
     gate.classList.add('hidden');
     root.classList.remove('hidden');
     if(!appStarted){appStarted=true;startApp();}
-  }else{
+  }else if(!currentOrg){
     gate.classList.remove('hidden');
     root.classList.add('hidden');
   }
@@ -820,8 +863,52 @@ function doLogin(){
 
 function logout(){
   currentOrg=null;
-  goPublic();
-  showToast('👋 יצאת מהמערכת');
+  if(fbAuth.currentUser){
+    goPublic();
+    showToast('👋 יצאת מהמערכת');
+  }else{
+    document.getElementById('app-root').classList.add('hidden');
+    document.getElementById('auth-gate').classList.remove('hidden');
+    authBackToRoles();
+  }
+}
+
+// ============================================================
+// GATE — ROLE CHOICE (משתמש פרטי / ארגון)
+// ============================================================
+function authChooseRole(role){
+  document.getElementById('auth-role-choice').style.display='none';
+  if(role==='user'){
+    document.getElementById('auth-header-sub').textContent='יש להתחבר כדי לצפות במאגר הכלבים';
+    document.getElementById('auth-body').style.display='block';
+  }else{
+    document.getElementById('auth-header-sub').textContent='כניסת ארגונים רשומים';
+    document.getElementById('gate-org-email').value='';
+    document.getElementById('gate-org-pass').value='';
+    document.getElementById('gate-org-err').classList.remove('show');
+    document.getElementById('auth-org-body').style.display='block';
+    ensureDataLoaded();
+  }
+}
+
+function authBackToRoles(){
+  document.getElementById('auth-body').style.display='none';
+  document.getElementById('auth-org-body').style.display='none';
+  document.getElementById('auth-header-sub').textContent='איך תרצו להיכנס?';
+  document.getElementById('auth-role-choice').style.display='block';
+}
+
+function gateOrgLogin(){
+  ensureDataLoaded().then(()=>{
+    const email=document.getElementById('gate-org-email').value.trim().toLowerCase();
+    const pass=document.getElementById('gate-org-pass').value;
+    const org=ORGS.find(o=>o.email===email&&o.pass===pass);
+    if(!org){document.getElementById('gate-org-err').classList.add('show');return;}
+    currentOrg=org;
+    document.getElementById('auth-gate').classList.add('hidden');
+    document.getElementById('app-root').classList.remove('hidden');
+    enterAdmin();
+  });
 }
 
 // ============================================================
@@ -1249,17 +1336,23 @@ function showToast(msg){
 }
 
 // ============================================================
-// INIT (called once, after the visitor is authenticated)
+// INIT (data is shared by both the private-user and org login paths)
 // ============================================================
-function startApp(){
-  pubPopulateBreeds();
-  fetch('orgs.json').then(r=>r.json()).then(orgs=>{
+let dataLoadPromise=null;
+function ensureDataLoaded(){
+  if(dataLoadPromise)return dataLoadPromise;
+  dataLoadPromise=fetch('orgs.json').then(r=>r.json()).then(orgs=>{
     ORGS=orgs;
     genDogs();
-    goPublic();
+    pubPopulateBreeds();
   }).catch(()=>{
     showToast('⚠️ שגיאה בטעינת רשימת הארגונים');
   });
+  return dataLoadPromise;
+}
+
+function startApp(){
+  ensureDataLoaded().then(goPublic);
 }
 </script>
 </body>
