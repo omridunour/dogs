@@ -110,9 +110,12 @@ body{display:flex;flex-direction:column;overflow:hidden;background:#F0EDE6;}
 .gallery-search{padding:8px 13px;border:1px solid var(--sand);border-radius:20px;font-family:'Heebo',sans-serif;font-size:13px;background:var(--warm);color:var(--charcoal);direction:rtl;outline:none;width:220px;}
 .gallery-search:focus{border-color:var(--sage);}
 .gallery-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;}
-.dog-card-pub{background:var(--warm);border-radius:12px;border:1px solid var(--sand);overflow:hidden;transition:transform 0.15s,box-shadow 0.15s;cursor:pointer;}
+.dog-card-pub{background:var(--warm);border-radius:12px;border:1px solid var(--sand);overflow:hidden;transition:transform 0.15s,box-shadow 0.15s;cursor:pointer;position:relative;}
 .dog-card-pub:hover{transform:translateY(-3px);box-shadow:0 10px 28px rgba(28,35,33,0.10);}
-.dog-card-top{height:110px;display:flex;align-items:center;justify-content:center;font-size:56px;background:var(--sand);}
+.dog-card-top{height:110px;display:flex;align-items:center;justify-content:center;font-size:56px;background:var(--sand);position:relative;}
+.dog-card-heart{position:absolute;top:6px;left:6px;font-size:20px;cursor:pointer;z-index:10;opacity:0;transition:opacity 0.2s;text-shadow:0 2px 4px rgba(0,0,0,0.1);}
+.dog-card-pub:hover .dog-card-heart{opacity:1;}
+.dog-card-heart.liked{opacity:1;}
 .dog-card-body{padding:12px 14px;}
 .dog-card-name{font-size:14px;font-weight:800;color:var(--charcoal);margin-bottom:2px;}
 .dog-card-breed{font-size:11px;color:var(--light);margin-bottom:8px;}
@@ -121,6 +124,21 @@ body{display:flex;flex-direction:column;overflow:hidden;background:#F0EDE6;}
 .dog-card-org{margin-top:6px;}
 .gallery-empty{grid-column:1/-1;padding:60px;text-align:center;color:var(--light);}
 .gallery-empty .ge-icon{font-size:48px;margin-bottom:12px;}
+
+/* Favorites / Wishlist */
+.favorites-wrap{flex:1;overflow-y:auto;padding:20px;}
+.fav-top{display:flex;align-items:center;gap:12px;margin-bottom:16px;}
+.fav-title{font-size:16px;font-weight:800;color:var(--charcoal);}
+.fav-count{font-size:12px;color:var(--light);}
+.fav-clear-btn{padding:6px 12px;border-radius:16px;border:1px solid var(--terra);background:transparent;color:var(--terra);font-size:11px;font-weight:700;cursor:pointer;transition:all 0.2s;}
+.fav-clear-btn:hover{background:var(--terra);color:white;}
+.fav-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px;}
+.fav-empty{grid-column:1/-1;padding:80px 20px;text-align:center;}
+.fav-empty .fe-icon{font-size:64px;margin-bottom:16px;}
+.fav-empty p{font-size:14px;color:var(--light);margin-bottom:8px;}
+.fav-empty .fe-hint{font-size:12px;color:var(--sand);}
+.back-btn{padding:7px 16px;background:rgba(255,255,255,0.12);color:white;border:1px solid rgba(255,255,255,0.2);border-radius:18px;font-size:13px;font-weight:700;cursor:pointer;transition:all 0.15s;}
+.back-btn:hover{background:rgba(255,255,255,0.22);}
 
 /* ===================== ORG ADMIN SCREEN ===================== */
 .admin-app{display:flex;flex:1;overflow:hidden;}
@@ -342,6 +360,29 @@ body{display:flex;flex-direction:column;overflow:hidden;background:#F0EDE6;}
       <div class="gallery-grid" id="gallery-grid"></div>
     </div>
 
+  </div>
+</div>
+
+<!-- ===================== FAVORITES SCREEN ===================== -->
+<div class="screen" id="screen-favorites">
+  <div style="background:var(--moss);padding:0 24px;height:56px;display:flex;align-items:center;gap:12px;flex-shrink:0;">
+    <button class="back-btn" onclick="goPublic()">← חזור</button>
+    <div style="color:white;font-weight:800;font-size:16px;">❤️ המועדפים שלי</div>
+  </div>
+  <div class="favorites-wrap">
+    <div class="fav-top">
+      <div>
+        <div class="fav-title">כלביך המועדפים</div>
+        <div class="fav-count" id="fav-count"></div>
+      </div>
+      <button class="fav-clear-btn" id="fav-clear-btn" onclick="clearAllFavorites()" style="display:none;">🗑 נקה הכל</button>
+    </div>
+    <div class="fav-grid" id="fav-grid"></div>
+    <div class="fav-empty" id="fav-empty">
+      <div class="fe-icon">💔</div>
+      <p>אין לך עדיין כלבים מועדפים</p>
+      <div class="fe-hint">בחזור לגלריה, לחץ על ❤️ כדי להוסיף כלב למועדפים שלך</div>
+    </div>
   </div>
 </div>
 
@@ -683,6 +724,7 @@ function goPublic(){
   showScreen('public');
   renderTopbarPublic();
   pubRender();
+  updateFavoriteBadge();
 }
 
 function enterAdmin(){
@@ -704,8 +746,10 @@ function enterAdmin(){
 function renderTopbarPublic(){
   document.getElementById('topbar-right').innerHTML=`
     <span class="tb-stat">זמינים: <strong>${dogs.filter(d=>d.status==='available').length}</strong></span>
+    <button class="btn btn-ghost" onclick="goFavorites()">❤️ המועדפים <strong id="fav-badge" style="margin-right:4px;"></strong></button>
     <button class="btn btn-ghost" onclick="openLogin()">🔐 כניסת ארגון</button>
     <button class="btn btn-ghost btn-sm" onclick="authSignOut()">יציאה מהאתר</button>`;
+  updateFavoriteBadge();
 }
 
 function renderTopbarAdmin(){
@@ -761,13 +805,20 @@ function pubRender(){
     card.className='dog-card-pub';
     const topTags=dog.personality.slice(0,2).map(p=>`<span class="dct">${p}</span>`).join('');
     card.innerHTML=`
-      <div class="dog-card-top">${dog.avatar}</div>
+      <div class="dog-card-top">
+        <div class="dog-card-heart" onclick="toggleFavorite(${dog.id}, event)"></div>
+        ${dog.avatar}
+      </div>
       <div class="dog-card-body">
         <div class="dog-card-name">${dog.name}</div>
         <div class="dog-card-breed">${dog.breed} · ${dog.age} · ${dog.gender}</div>
         <div class="dog-card-tags">${topTags}<span class="dct">${dog.size.split('(')[0].trim()}</span></div>
         <div class="dog-card-org">${orgBadgeHtml(dog.shelter)}</div>
       </div>`;
+    const heart=card.querySelector('.dog-card-heart');
+    const isFav=isFavorite(dog.id);
+    heart.textContent=isFav?'❤️':'🤍';
+    heart.classList.toggle('liked',isFav);
     grid.appendChild(card);
   });
   if(count===0){
@@ -781,6 +832,101 @@ function pubPopulateBreeds(){
   [...new Set(dogs.map(d=>d.breed))].sort().forEach(b=>{
     const o=document.createElement('option');o.value=b;o.textContent=b;sel.appendChild(o);
   });
+}
+
+// ============================================================
+// FAVORITES / WISHLIST
+// ============================================================
+function isFavorite(dogId){
+  const favs=JSON.parse(localStorage.getItem('favorites')||'[]');
+  return favs.includes(dogId);
+}
+
+function toggleFavorite(dogId,event){
+  event.stopPropagation();
+  const favs=JSON.parse(localStorage.getItem('favorites')||'[]');
+  const idx=favs.indexOf(dogId);
+  if(idx>-1){favs.splice(idx,1);}else{favs.push(dogId);}
+  localStorage.setItem('favorites',JSON.stringify(favs));
+  pubRender();
+  showToast(idx>-1?'הוסר מהמועדפים':'הוסף למועדפים');
+}
+
+function goFavorites(){
+  showScreen('favorites');
+  renderFavoritesScreen();
+  renderTopbarFavorites();
+}
+
+function renderFavoritesScreen(){
+  const favs=JSON.parse(localStorage.getItem('favorites')||'[]');
+  const grid=document.getElementById('fav-grid');
+  const empty=document.getElementById('fav-empty');
+  grid.innerHTML='';
+  if(favs.length===0){
+    empty.style.display='flex';
+    empty.style.flexDirection='column';
+    empty.style.alignItems='center';
+    document.getElementById('fav-clear-btn').style.display='none';
+    document.getElementById('fav-count').textContent='';
+    return;
+  }
+  empty.style.display='none';
+  document.getElementById('fav-clear-btn').style.display='block';
+  document.getElementById('fav-count').textContent=`(${favs.length} כלבים)`;
+  favs.forEach(dogId=>{
+    const dog=dogs.find(d=>d.id===dogId);
+    if(!dog)return;
+    const card=document.createElement('div');
+    card.className='dog-card-pub';
+    const topTags=dog.personality.slice(0,2).map(p=>`<span class="dct">${p}</span>`).join('');
+    card.innerHTML=`
+      <div class="dog-card-top">
+        <div class="dog-card-heart liked" onclick="removeFavorite(${dog.id}, event)">❤️</div>
+        ${dog.avatar}
+      </div>
+      <div class="dog-card-body">
+        <div class="dog-card-name">${dog.name}</div>
+        <div class="dog-card-breed">${dog.breed} · ${dog.age} · ${dog.gender}</div>
+        <div class="dog-card-tags">${topTags}<span class="dct">${dog.size.split('(')[0].trim()}</span></div>
+        <div class="dog-card-org">${orgBadgeHtml(dog.shelter)}</div>
+      </div>`;
+    grid.appendChild(card);
+  });
+}
+
+function removeFavorite(dogId,event){
+  event.stopPropagation();
+  const favs=JSON.parse(localStorage.getItem('favorites')||'[]');
+  const idx=favs.indexOf(dogId);
+  if(idx>-1){favs.splice(idx,1);}
+  localStorage.setItem('favorites',JSON.stringify(favs));
+  renderFavoritesScreen();
+  showToast('הוסר מהמועדפים');
+}
+
+function clearAllFavorites(){
+  if(!confirm('למחוק את כל המועדפים?'))return;
+  localStorage.setItem('favorites','[]');
+  renderFavoritesScreen();
+  showToast('כל המועדפים נמחקו');
+}
+
+function updateFavoriteBadge(){
+  const favs=JSON.parse(localStorage.getItem('favorites')||'[]');
+  const badge=document.getElementById('fav-badge');
+  if(badge&&favs.length>0){
+    badge.textContent=`(${favs.length})`;
+  }else if(badge){
+    badge.textContent='';
+  }
+}
+
+function renderTopbarFavorites(){
+  document.getElementById('topbar-right').innerHTML=`
+    <span class="tb-stat">מועדפים: <strong>${JSON.parse(localStorage.getItem('favorites')||'[]').length}</strong></span>
+    <button class="btn btn-ghost" onclick="openLogin()">🔐 כניסת ארגון</button>
+    <button class="btn btn-ghost btn-sm" onclick="authSignOut()">יציאה מהאתר</button>`;
 }
 
 // ============================================================
