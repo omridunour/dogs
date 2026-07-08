@@ -665,7 +665,18 @@ function ageGroup(s){
 let dogs=[];
 let nextId=51;
 
+function saveDogsToStorage(){
+  localStorage.setItem('dogsData',JSON.stringify(dogs));
+  localStorage.setItem('dogsNextId',String(nextId));
+}
+
 function genDogs(){
+  const saved=localStorage.getItem('dogsData');
+  if(saved){
+    dogs=JSON.parse(saved);
+    nextId=parseInt(localStorage.getItem('dogsNextId')||'51',10);
+    return;
+  }
   dogs=Array.from({length:50},(_,i)=>{
     const n=i+1, breed=rnd(BREEDS), size=rnd(SIZES), gender=Math.random()>.5?'זכר':'נקבה';
     const ageY=rndInt(0,12);
@@ -680,6 +691,7 @@ function genDogs(){
     return{id:n,name:`כלב ${n}`,breed,size,gender,age,ageGroup:ageGroup(age),
       status:st,avatar,shelter:org,personality,env,medical,medicalNotes:'',desc:'',date};
   });
+  saveDogsToStorage();
 }
 
 // ============================================================
@@ -1029,6 +1041,7 @@ function saveDog(){
   dog.personality=getTags('#personality-tags');
   dog.env=getTags('#env-tags');
   document.getElementById('editor-dog-title').textContent=dog.name;
+  saveDogsToStorage();
   adminRender();
   showToast('✅ השינויים נשמרו');
 }
@@ -1045,6 +1058,7 @@ function deleteDog(){
   activeId=null;
   document.getElementById('empty-state').style.display='flex';
   document.getElementById('dog-editor').style.display='none';
+  saveDogsToStorage();
   adminRender();
   showToast('🗑️ הכלב נמחק');
 }
@@ -1056,6 +1070,7 @@ function openAddDog(){
     gender:'זכר',age:'2 שנים',ageGroup:'צעיר',status:'available',avatar:'🐕',
     personality:[],env:[],medical:['בריא'],medicalNotes:'',desc:'',shelter:currentOrg.id,date:today};
   dogs.unshift(nd);
+  saveDogsToStorage();
   // show available so new dog appears
   adminStatusFilter=['available'];
   document.querySelectorAll('.afc').forEach(c=>c.classList.toggle('on',c.dataset.s==='available'));
