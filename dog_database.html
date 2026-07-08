@@ -63,6 +63,26 @@ body{display:flex;flex-direction:column;overflow:hidden;background:#F0EDE6;}
 .loh-row:last-child{border-bottom:none;}
 .loh-icon{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
 
+/* ===================== CONTACT MODAL ===================== */
+.contact-overlay{position:fixed;inset:0;background:rgba(28,35,33,0.55);z-index:310;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px);}
+.contact-overlay.open{display:flex;}
+.contact-box{background:var(--warm);border-radius:16px;width:360px;max-width:92vw;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,0.22);}
+.contact-header{background:var(--moss);padding:20px 24px;text-align:center;}
+.contact-header h3{font-size:16px;font-weight:800;color:white;margin-bottom:4px;}
+.contact-header p{font-size:12px;color:rgba(255,255,255,0.7);}
+.contact-body{padding:20px 24px;}
+.contact-option{display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:12px;border:1px solid var(--sand);background:var(--cream);margin-bottom:10px;cursor:pointer;transition:all 0.15s;text-decoration:none;color:inherit;}
+.contact-option:hover{border-color:var(--sage);background:#E8F0E9;transform:translateY(-1px);}
+.contact-option .co-icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0;background:white;}
+.contact-option .co-text{flex:1;min-width:0;}
+.contact-option .co-label{font-size:13px;font-weight:700;color:var(--charcoal);}
+.contact-option .co-value{font-size:11px;color:var(--light);direction:ltr;text-align:right;}
+.contact-empty{font-size:12px;color:var(--light);text-align:center;padding:16px 0;}
+.contact-close{margin-top:2px;width:100%;padding:10px;border-radius:10px;border:1px solid var(--sand);background:transparent;color:var(--mid);font-family:'Heebo',sans-serif;font-size:12px;font-weight:700;cursor:pointer;}
+.contact-close:hover{background:var(--cream);}
+.dog-card-contact-btn{display:block;width:100%;margin-top:10px;padding:8px;border-radius:10px;border:none;background:var(--moss);color:white;font-family:'Heebo',sans-serif;font-size:12px;font-weight:700;cursor:pointer;transition:background 0.15s;}
+.dog-card-contact-btn:hover{background:var(--moss-light);}
+
 /* ===================== APP ROOT / AUTH GATE ===================== */
 .app-root{display:flex;flex-direction:column;flex:1;overflow:hidden;}
 .app-root.hidden{display:none;}
@@ -559,6 +579,17 @@ body{display:flex;flex-direction:column;overflow:hidden;background:#F0EDE6;}
   </div>
 </div>
 
+<!-- ===================== CONTACT MODAL ===================== -->
+<div class="contact-overlay" id="contact-overlay">
+  <div class="contact-box">
+    <div class="contact-header">
+      <h3>בחר אופן התקשרות</h3>
+      <p id="contact-org-name"></p>
+    </div>
+    <div class="contact-body" id="contact-options"></div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -668,6 +699,54 @@ function orgInfo(id){return ORGS.find(o=>o.id===id)||ORGS[0];}
 function orgBadgeHtml(orgId){
   const o=orgInfo(orgId);
   return `<span class="org-badge ${o.cssClass}"><span class="org-dot"></span>${o.name}</span>`;
+}
+
+// ============================================================
+// CONTACT ORGANIZATION
+// ============================================================
+const GOOGLE_ICON_SVG=`<svg width="18" height="18" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3c-1.6 4.7-6.1 8-11.3 8-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.1 8 3.1l5.7-5.7C34.6 6 29.6 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.7-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.6 15.1 18.9 12 24 12c3.1 0 5.9 1.1 8 3.1l5.7-5.7C34.6 6 29.6 4 24 4 16.3 4 9.6 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.5 0 10.4-1.9 14.2-5.1l-6.6-5.4C29.6 35.4 27 36 24 36c-5.2 0-9.6-3.3-11.2-8l-6.6 5.1C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.2 4.2-4.1 5.6l6.6 5.4C41.5 36.3 44 30.8 44 24c0-1.3-.1-2.7-.4-3.5z"/></svg>`;
+
+function openContact(dogId,event){
+  if(event)event.stopPropagation();
+  const dog=dogs.find(d=>d.id===dogId);if(!dog)return;
+  const org=orgInfo(dog.shelter);
+  document.getElementById('contact-org-name').textContent=org.name;
+  const opts=[];
+  if(org.whatsapp){
+    const msg=encodeURIComponent(`שלום, אני מתעניין/ת באימוץ של ${dog.name} 🐾`);
+    opts.push(`<a class="contact-option" href="https://wa.me/${org.whatsapp}?text=${msg}" target="_blank" rel="noopener">
+      <div class="co-icon" style="background:#25D366;color:white;">💬</div>
+      <div class="co-text"><div class="co-label">WhatsApp</div><div class="co-value">+${org.whatsapp}</div></div>
+    </a>`);
+  }
+  if(org.phone){
+    opts.push(`<a class="contact-option" href="tel:${org.phone}">
+      <div class="co-icon" style="background:var(--moss);color:white;">📞</div>
+      <div class="co-text"><div class="co-label">טלפון</div><div class="co-value">${org.phone}</div></div>
+    </a>`);
+  }
+  if(org.facebook){
+    opts.push(`<a class="contact-option" href="${org.facebook}" target="_blank" rel="noopener">
+      <div class="co-icon" style="background:#1877F2;color:white;font-weight:800;">f</div>
+      <div class="co-text"><div class="co-label">פייסבוק</div><div class="co-value">עמוד הארגון</div></div>
+    </a>`);
+  }
+  const contactEmail=org.contactEmail||org.email;
+  if(contactEmail){
+    const subject=encodeURIComponent(`בקשה לפרטים על ${dog.name}`);
+    opts.push(`<a class="contact-option" href="mailto:${contactEmail}?subject=${subject}">
+      <div class="co-icon">${GOOGLE_ICON_SVG}</div>
+      <div class="co-text"><div class="co-label">אימייל</div><div class="co-value">${contactEmail}</div></div>
+    </a>`);
+  }
+  document.getElementById('contact-options').innerHTML=opts.length
+    ?opts.join('')+`<button class="contact-close" onclick="closeContact()">סגור</button>`
+    :`<div class="contact-empty">לא נמצאו פרטי התקשרות לארגון זה</div><button class="contact-close" onclick="closeContact()">סגור</button>`;
+  document.getElementById('contact-overlay').classList.add('open');
+}
+
+function closeContact(){
+  document.getElementById('contact-overlay').classList.remove('open');
 }
 
 function rnd(arr){return arr[Math.floor(Math.random()*arr.length)];}
@@ -849,6 +928,7 @@ function pubRender(){
         <div class="dog-card-breed">${dog.breed} · ${dog.age} · ${dog.gender}</div>
         <div class="dog-card-tags">${topTags}<span class="dct">${dog.size.split('(')[0].trim()}</span></div>
         <div class="dog-card-org">${orgBadgeHtml(dog.shelter)}</div>
+        <button type="button" class="dog-card-contact-btn" onclick="openContact(${dog.id}, event)">📞 צור קשר</button>
       </div>`;
     const heart=card.querySelector('.dog-card-heart');
     const isFav=isFavorite(dog.id);
@@ -927,6 +1007,7 @@ function renderFavoritesScreen(){
         <div class="dog-card-breed">${dog.breed} · ${dog.age} · ${dog.gender}</div>
         <div class="dog-card-tags">${topTags}<span class="dct">${dog.size.split('(')[0].trim()}</span></div>
         <div class="dog-card-org">${orgBadgeHtml(dog.shelter)}</div>
+        <button type="button" class="dog-card-contact-btn" onclick="openContact(${dog.id}, event)">📞 צור קשר</button>
       </div>`;
     grid.appendChild(card);
   });
