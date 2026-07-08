@@ -113,6 +113,9 @@ body{display:flex;flex-direction:column;overflow:hidden;background:#F0EDE6;}
 .arb-sub{font-size:11px;color:var(--light);margin-top:2px;}
 .auth-back-btn{background:none;border:none;color:var(--mid);font-family:'Heebo',sans-serif;font-size:12px;font-weight:700;cursor:pointer;padding:0 0 16px;display:block;}
 .auth-back-btn:hover{color:var(--moss);}
+.auth-switch-link{text-align:center;font-size:12px;color:var(--mid);margin-top:14px;}
+.auth-switch-link a{color:var(--moss);font-weight:700;text-decoration:none;cursor:pointer;}
+.auth-switch-link a:hover{text-decoration:underline;}
 
 /* ===================== PUBLIC SCREEN ===================== */
 .pub-app{display:flex;flex:1;overflow:hidden;}
@@ -242,6 +245,8 @@ body{display:flex;flex-direction:column;overflow:hidden;background:#F0EDE6;}
 .org-sos .org-dot{background:#E02424;}
 .org-k1 .org-dot{background:#2E86C1;}
 .org-k2 .org-dot{background:#6D28D9;}
+.org-custom{background:var(--cream);color:var(--charcoal);border:1px solid var(--sand);}
+.org-custom .org-dot{background:var(--terra);}
 
 /* TOAST */
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--charcoal);color:white;padding:10px 20px;border-radius:20px;font-size:13px;font-family:'Heebo',sans-serif;z-index:9999;opacity:0;transition:opacity 0.3s;pointer-events:none;}
@@ -317,6 +322,34 @@ body{display:flex;flex-direction:column;overflow:hidden;background:#F0EDE6;}
       </div>
       <div class="login-err" id="gate-org-err">אימייל או סיסמה שגויים. נסה שוב.</div>
       <button class="login-submit" style="width:100%;" onclick="gateOrgLogin()">כניסה כארגון →</button>
+      <div class="auth-switch-link">ארגון חדש? <a onclick="authShowOrgRegister()">הירשם כאן</a></div>
+    </div>
+
+    <!-- ORGANIZATION REGISTRATION -->
+    <div class="auth-body" id="auth-org-register" style="display:none;">
+      <button class="auth-back-btn" onclick="authBackToOrgLogin()">→ חזרה</button>
+      <div class="login-field">
+        <label>שם הארגון</label>
+        <input type="text" id="reg-org-name" placeholder="לדוגמה: עמותת כלבי הצפון"/>
+      </div>
+      <div class="login-field">
+        <label>אימייל</label>
+        <input type="email" id="reg-org-email" placeholder="yourorg@example.com"/>
+      </div>
+      <div class="login-field">
+        <label>סיסמה</label>
+        <input type="password" id="reg-org-pass" placeholder="••••••••"/>
+      </div>
+      <div class="login-field">
+        <label>אימות סיסמה</label>
+        <input type="password" id="reg-org-pass2" placeholder="••••••••"/>
+      </div>
+      <div class="login-field">
+        <label>תיאור קצר (רשות)</label>
+        <input type="text" id="reg-org-desc" placeholder="לדוגמה: עמותת הצלת כלבים"/>
+      </div>
+      <div class="login-err" id="reg-org-err"></div>
+      <button class="login-submit" style="width:100%;" onclick="submitOrgRegister()">✓ הרשמה</button>
     </div>
   </div>
 </div>
@@ -894,6 +927,7 @@ function authChooseRole(role){
 function authBackToRoles(){
   document.getElementById('auth-body').style.display='none';
   document.getElementById('auth-org-body').style.display='none';
+  document.getElementById('auth-org-register').style.display='none';
   document.getElementById('auth-header-sub').textContent='איך תרצו להיכנס?';
   document.getElementById('auth-role-choice').style.display='block';
 }
@@ -908,6 +942,70 @@ function gateOrgLogin(){
     document.getElementById('auth-gate').classList.add('hidden');
     document.getElementById('app-root').classList.remove('hidden');
     enterAdmin();
+  });
+}
+
+// ============================================================
+// GATE — ORGANIZATION REGISTRATION
+// ============================================================
+function authShowOrgRegister(){
+  document.getElementById('auth-org-body').style.display='none';
+  document.getElementById('auth-header-sub').textContent='רישום ארגון חדש';
+  ['reg-org-name','reg-org-email','reg-org-pass','reg-org-pass2','reg-org-desc'].forEach(id=>{
+    document.getElementById(id).value='';
+  });
+  document.getElementById('reg-org-err').classList.remove('show');
+  document.getElementById('auth-org-register').style.display='block';
+  ensureDataLoaded();
+}
+
+function authBackToOrgLogin(){
+  document.getElementById('auth-org-register').style.display='none';
+  document.getElementById('auth-header-sub').textContent='כניסת ארגונים רשומים';
+  document.getElementById('auth-org-body').style.display='block';
+}
+
+function saveCustomOrg(org){
+  const custom=JSON.parse(localStorage.getItem('customOrgs')||'[]');
+  custom.push(org);
+  localStorage.setItem('customOrgs',JSON.stringify(custom));
+}
+
+function submitOrgRegister(){
+  const err=document.getElementById('reg-org-err');
+  err.classList.remove('show');
+  const name=document.getElementById('reg-org-name').value.trim();
+  const email=document.getElementById('reg-org-email').value.trim().toLowerCase();
+  const pass=document.getElementById('reg-org-pass').value;
+  const pass2=document.getElementById('reg-org-pass2').value;
+  const desc=document.getElementById('reg-org-desc').value.trim();
+  if(!name||!email||!pass){
+    err.textContent='נא למלא שם ארגון, אימייל וסיסמה.';err.classList.add('show');return;
+  }
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
+    err.textContent='כתובת אימייל לא תקינה.';err.classList.add('show');return;
+  }
+  if(pass.length<4){
+    err.textContent='הסיסמה חייבת לכלול לפחות 4 תווים.';err.classList.add('show');return;
+  }
+  if(pass!==pass2){
+    err.textContent='הסיסמאות אינן תואמות.';err.classList.add('show');return;
+  }
+  ensureDataLoaded().then(()=>{
+    if(ORGS.some(o=>o.email.toLowerCase()===email)){
+      err.textContent='כתובת אימייל זו כבר רשומה במערכת.';err.classList.add('show');return;
+    }
+    let id=name,n=1;
+    while(ORGS.some(o=>o.id===id)){n++;id=`${name} ${n}`;}
+    const newOrg={id,name,icon:'🏢',cssClass:'org-custom',iconBg:'#EDEAE2',color:'#5A6360',
+      desc:desc||'ארגון רשום עצמאית',email,pass,phone:'',whatsapp:'',facebook:'',contactEmail:email};
+    ORGS.push(newOrg);
+    saveCustomOrg(newOrg);
+    currentOrg=newOrg;
+    document.getElementById('auth-gate').classList.add('hidden');
+    document.getElementById('app-root').classList.remove('hidden');
+    enterAdmin();
+    showToast('🎉 הארגון נרשם בהצלחה!');
   });
 }
 
@@ -1342,7 +1440,8 @@ let dataLoadPromise=null;
 function ensureDataLoaded(){
   if(dataLoadPromise)return dataLoadPromise;
   dataLoadPromise=fetch('orgs.json').then(r=>r.json()).then(orgs=>{
-    ORGS=orgs;
+    const customOrgs=JSON.parse(localStorage.getItem('customOrgs')||'[]');
+    ORGS=orgs.concat(customOrgs);
     genDogs();
     pubPopulateBreeds();
   }).catch(()=>{
