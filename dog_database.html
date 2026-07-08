@@ -113,10 +113,10 @@ body{display:flex;flex-direction:column;overflow:hidden;background:#F0EDE6;}
 .dog-card-pub{background:var(--warm);border-radius:12px;border:1px solid var(--sand);overflow:hidden;transition:transform 0.15s,box-shadow 0.15s;cursor:pointer;position:relative;}
 .dog-card-pub:hover{transform:translateY(-3px);box-shadow:0 10px 28px rgba(28,35,33,0.10);}
 .dog-card-top{height:110px;display:flex;align-items:center;justify-content:center;font-size:56px;background:var(--sand);position:relative;}
-.dog-card-heart{position:absolute;top:6px;left:6px;font-size:20px;cursor:pointer;z-index:10;opacity:0;transition:opacity 0.2s;text-shadow:0 2px 4px rgba(0,0,0,0.1);}
-.dog-card-pub:hover .dog-card-heart{opacity:1;}
-.dog-card-heart.liked{opacity:1;}
-.dog-card-body{padding:12px 14px;}
+.dog-card-heart{position:absolute;bottom:8px;left:8px;display:flex;align-items:center;gap:4px;padding:4px 10px;border-radius:14px;font-size:10px;font-weight:700;cursor:pointer;z-index:10;background:var(--warm);border:1px solid var(--sand);color:var(--mid);box-shadow:0 2px 6px rgba(28,35,33,0.12);transition:all 0.15s;white-space:nowrap;}
+.dog-card-heart:hover{border-color:var(--terra);color:var(--terra);}
+.dog-card-heart.liked{background:#FDE8E8;border-color:#F9A8A8;color:#9B1C1C;}
+.dog-card-body{padding:12px 14px 42px;position:relative;}
 .dog-card-name{font-size:14px;font-weight:800;color:var(--charcoal);margin-bottom:2px;}
 .dog-card-breed{font-size:11px;color:var(--light);margin-bottom:8px;}
 .dog-card-tags{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px;}
@@ -818,7 +818,6 @@ function pubRender(){
     const topTags=dog.personality.slice(0,2).map(p=>`<span class="dct">${p}</span>`).join('');
     card.innerHTML=`
       <div class="dog-card-top">
-        <div class="dog-card-heart" onclick="toggleFavorite(${dog.id}, event)"></div>
         ${dog.avatar}
       </div>
       <div class="dog-card-body">
@@ -826,10 +825,11 @@ function pubRender(){
         <div class="dog-card-breed">${dog.breed} · ${dog.age} · ${dog.gender}</div>
         <div class="dog-card-tags">${topTags}<span class="dct">${dog.size.split('(')[0].trim()}</span></div>
         <div class="dog-card-org">${orgBadgeHtml(dog.shelter)}</div>
+        <div class="dog-card-heart" onclick="toggleFavorite(${dog.id}, event)"></div>
       </div>`;
     const heart=card.querySelector('.dog-card-heart');
     const isFav=isFavorite(dog.id);
-    heart.textContent=isFav?'❤️':'🤍';
+    heart.textContent=isFav?'❤️ הוסרה מהמועדפים':'🤍 הוספה למועדפים';
     heart.classList.toggle('liked',isFav);
     grid.appendChild(card);
   });
@@ -894,7 +894,6 @@ function renderFavoritesScreen(){
     const topTags=dog.personality.slice(0,2).map(p=>`<span class="dct">${p}</span>`).join('');
     card.innerHTML=`
       <div class="dog-card-top">
-        <div class="dog-card-heart liked" onclick="removeFavorite(${dog.id}, event)">❤️</div>
         ${dog.avatar}
       </div>
       <div class="dog-card-body">
@@ -902,6 +901,7 @@ function renderFavoritesScreen(){
         <div class="dog-card-breed">${dog.breed} · ${dog.age} · ${dog.gender}</div>
         <div class="dog-card-tags">${topTags}<span class="dct">${dog.size.split('(')[0].trim()}</span></div>
         <div class="dog-card-org">${orgBadgeHtml(dog.shelter)}</div>
+        <div class="dog-card-heart liked" onclick="removeFavorite(${dog.id}, event)">❤️ הסרה מהמועדפים</div>
       </div>`;
     grid.appendChild(card);
   });
