@@ -87,8 +87,11 @@ body{display:flex;flex-direction:column;overflow:hidden;background:#F0EDE6;}
 .gallery-search{padding:8px 13px;border:1px solid var(--sand);border-radius:20px;font-family:'Heebo',sans-serif;font-size:13px;background:var(--warm);color:var(--charcoal);direction:rtl;outline:none;width:220px;}
 .gallery-search:focus{border-color:var(--sage);}
 .gallery-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;}
-.dog-card-pub{background:var(--warm);border-radius:12px;border:1px solid var(--sand);overflow:hidden;transition:transform 0.15s,box-shadow 0.15s;cursor:pointer;}
+.dog-card-pub{position:relative;background:var(--warm);border-radius:12px;border:1px solid var(--sand);overflow:hidden;transition:transform 0.15s,box-shadow 0.15s;cursor:pointer;}
 .dog-card-pub:hover{transform:translateY(-3px);box-shadow:0 10px 28px rgba(28,35,33,0.10);}
+.dog-card-pub .fav-toggle{position:absolute;top:10px;left:10px;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;border:1px solid rgba(46,80,53,0.18);background:rgba(255,255,255,0.92);cursor:pointer;transition:transform 0.15s,background 0.15s,color 0.15s;border-color:rgba(46,80,53,0.18);}
+.dog-card-pub .fav-toggle:hover{transform:scale(1.05);}
+.dog-card-pub .fav-toggle.active{background:var(--terra);color:white;border-color:var(--terra);}
 .dog-card-top{height:110px;display:flex;align-items:center;justify-content:center;font-size:56px;background:var(--sand);}
 .dog-card-body{padding:12px 14px;}
 .dog-card-name{font-size:14px;font-weight:800;color:var(--charcoal);margin-bottom:2px;}
@@ -284,7 +287,23 @@ body{display:flex;flex-direction:column;overflow:hidden;background:#F0EDE6;}
 
   </div>
 </div>
-
+ 
+<!-- ===================== FAVORITES SCREEN ===================== -->
+<div class="screen" id="screen-favorites">
+  <div class="pub-app">
+    <div class="gallery-wrap">
+      <div class="gallery-top">
+        <div>
+          <div class="gallery-title">המועדפים שלי</div>
+          <div class="gallery-count" id="favorites-count"></div>
+        </div>
+        <button class="btn btn-moss btn-sm" onclick="goPublic()">← חזור לכלבים</button>
+      </div>
+      <div class="gallery-grid" id="favorites-grid"></div>
+    </div>
+  </div>
+</div>
+ 
 <!-- ===================== ADMIN SCREEN ===================== -->
 <div class="screen" id="screen-admin">
   <div class="admin-app">
@@ -538,6 +557,12 @@ function goPublic(){
   pubRender();
 }
 
+function goFavorites(){
+  showScreen('favorites');
+  renderTopbarFavorites();
+  renderFavorites();
+}
+
 function enterAdmin(){
   showScreen('admin');
   renderTopbarAdmin();
@@ -554,12 +579,42 @@ function enterAdmin(){
   showToast(`✅ ברוך הבא, ${o.name}`);
 }
 
+function getFavoriteIds(){
+  const raw=localStorage.getItem('favoriteDogs');
+  try{return raw?JSON.parse(raw):[];}catch{return[];}
+}
+function saveFavoriteIds(ids){
+  const uniq=[...new Set(ids)];
+  localStorage.setItem('favoriteDogs',JSON.stringify(uniq));
+}
+function isFavorite(id){
+  return getFavoriteIds().includes(id);
+}
+function toggleFavorite(id){
+  const ids=getFavoriteIds();
+  const idx=ids.indexOf(id);
+  if(idx===-1) ids.push(id);
+  else ids.splice(idx,1);
+  saveFavoriteIds(ids);
+  if(document.getElementById('screen-public').classList.contains('active')) pubRender();
+  if(document.getElementById('screen-favorites').classList.contains('active')) renderFavorites();
+  if(document.getElementById('screen-favorites').classList.contains('active')) renderTopbarFavorites();
+  else renderTopbarPublic();
+}
 function renderTopbarPublic(){
+  const count=getFavoriteIds().length;
   document.getElementById('topbar-right').innerHTML=`
-    <span class="tb-stat">זמינים: <strong>${dogs.filter(d=>d.status==='available').length}</strong></span>
+    <span class="tb-stat">חביבים: <strong>${count}</strong></span>
+    <button class="btn btn-terra btn-sm" onclick="goFavorites()">המועדפים שלי</button>
     <button class="btn btn-ghost" onclick="openLogin()">🔐 כניסת ארגון</button>`;
 }
-
+function renderTopbarFavorites(){
+  const count=getFavoriteIds().length;
+  document.getElementById('topbar-right').innerHTML=`
+    <span class="tb-stat">חביבים: <strong>${count}</strong></span>
+    <button class="btn btn-moss btn-sm" onclick="goPublic()">← חזור לכלבים</button>
+    <button class="btn btn-ghost" onclick="openLogin()">🔐 כניסת ארגון</button>`;
+}
 function renderTopbarAdmin(){
   const o=currentOrg;
   const myDogs=dogs.filter(d=>d.shelter===o.id);
@@ -612,7 +667,10 @@ function pubRender(){
     const card=document.createElement('div');
     card.className='dog-card-pub';
     const topTags=dog.personality.slice(0,2).map(p=>`<span class="dct">${p}</span>`).join('');
+    const favActive=isFavorite(dog.id)?' active':'';
+    const favIcon=isFavorite(dog.id)?'❤️':'🤍';
     card.innerHTML=`
+      <button class="fav-toggle${favActive}" onclick="event.stopPropagation();toggleFavorite(${dog.id})" aria-label="הוסף למועדפים">${favIcon}</button>
       <div class="dog-card-top">${dog.avatar}</div>
       <div class="dog-card-body">
         <div class="dog-card-name">${dog.name}</div>
@@ -633,6 +691,33 @@ function pubPopulateBreeds(){
   [...new Set(dogs.map(d=>d.breed))].sort().forEach(b=>{
     const o=document.createElement('option');o.value=b;o.textContent=b;sel.appendChild(o);
   });
+}
+
+function renderFavorites(){
+  const grid=document.getElementById('favorites-grid');
+  const favIds=getFavoriteIds();
+  const favDogs=favIds.map(id=>dogs.find(d=>d.id===id)).filter(Boolean);
+  grid.innerHTML='';
+  if(favDogs.length===0){
+    grid.innerHTML=`<div class="gallery-empty"><div class="ge-icon">💖</div>אין כלבים במועדפים עדיין<br/>לחץ על הלב בכל כלב כדי להוסיף אותו</div>`;
+  } else {
+    favDogs.forEach(dog=>{
+      const card=document.createElement('div');
+      card.className='dog-card-pub';
+      const topTags=dog.personality.slice(0,2).map(p=>`<span class="dct">${p}</span>`).join('');
+      card.innerHTML=`
+        <button class="fav-toggle active" onclick="event.stopPropagation();toggleFavorite(${dog.id})" aria-label="הסר מהמועדפים">❤️</button>
+        <div class="dog-card-top">${dog.avatar}</div>
+        <div class="dog-card-body">
+          <div class="dog-card-name">${dog.name}</div>
+          <div class="dog-card-breed">${dog.breed} · ${dog.age} · ${dog.gender}</div>
+          <div class="dog-card-tags">${topTags}<span class="dct">${dog.size.split('(')[0].trim()}</span></div>
+          <div class="dog-card-org">${orgBadgeHtml(dog.shelter)}</div>
+        </div>`;
+      grid.appendChild(card);
+    });
+  }
+  document.getElementById('favorites-count').textContent=`${favDogs.length} כלבים במועדפים`;
 }
 
 // ============================================================
