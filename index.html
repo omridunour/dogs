@@ -248,6 +248,26 @@ body{display:flex;flex-direction:column;overflow:hidden;background:#F0EDE6;}
 .org-custom{background:var(--cream);color:var(--charcoal);border:1px solid var(--sand);}
 .org-custom .org-dot{background:var(--terra);}
 
+/* ===================== SUPER ADMIN PANEL ===================== */
+.sa-org-row{display:flex;align-items:center;gap:14px;padding:14px 16px;background:var(--warm);border:1px solid var(--sand);border-radius:12px;margin-bottom:10px;}
+.sa-org-icon{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;}
+.sa-org-info{flex:1;min-width:0;}
+.sa-org-name{font-size:14px;font-weight:800;color:var(--charcoal);}
+.sa-org-meta{font-size:11px;color:var(--light);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.sa-status{padding:4px 10px;border-radius:12px;font-size:11px;font-weight:700;flex-shrink:0;white-space:nowrap;}
+.sa-status-pending{background:#FAEEDA;color:#7A4800;}
+.sa-status-approved{background:#E8F0E9;color:var(--moss);}
+.sa-status-rejected{background:#FDE8E8;color:#9B1C1C;}
+.sa-org-actions{display:flex;gap:6px;flex-shrink:0;}
+.sa-btn{padding:6px 12px;border-radius:10px;border:1px solid var(--sand);background:var(--cream);color:var(--charcoal);font-family:'Heebo',sans-serif;font-size:11px;font-weight:700;cursor:pointer;transition:all 0.15s;white-space:nowrap;}
+.sa-btn:hover{border-color:var(--moss);}
+.sa-approve{background:var(--moss);color:white;border-color:var(--moss);}
+.sa-approve:hover{background:var(--moss-light);}
+.sa-reject{background:transparent;color:#C0392B;border-color:#F0997B;}
+.sa-reject:hover{background:#FDE8E8;}
+.sa-suspend{background:transparent;color:var(--terra);border-color:var(--terra);}
+.sa-suspend:hover{background:var(--terra);color:white;}
+
 /* TOAST */
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--charcoal);color:white;padding:10px 20px;border-radius:20px;font-size:13px;font-family:'Heebo',sans-serif;z-index:9999;opacity:0;transition:opacity 0.3s;pointer-events:none;}
 .toast.show{opacity:1;}
@@ -274,6 +294,7 @@ body{display:flex;flex-direction:column;overflow:hidden;background:#F0EDE6;}
         <div class="arb-icon">🏢</div>
         <div><div class="arb-title">ארגון</div><div class="arb-sub">ניהול כלבים לאימוץ</div></div>
       </button>
+      <div class="auth-switch-link">מנהל מערכת? <a onclick="authShowSuperAdminLogin()">כניסה כאן</a></div>
     </div>
 
     <!-- PRIVATE USER LOGIN -->
@@ -350,6 +371,21 @@ body{display:flex;flex-direction:column;overflow:hidden;background:#F0EDE6;}
       </div>
       <div class="login-err" id="reg-org-err"></div>
       <button class="login-submit" style="width:100%;" onclick="submitOrgRegister()">✓ הרשמה</button>
+    </div>
+
+    <!-- SUPER ADMIN LOGIN -->
+    <div class="auth-body" id="auth-superadmin-body" style="display:none;">
+      <button class="auth-back-btn" onclick="authBackToRoles()">→ חזרה</button>
+      <div class="login-field">
+        <label>אימייל</label>
+        <input type="email" id="sa-email" placeholder="admin@example.com" onkeydown="if(event.key==='Enter')superAdminLogin()"/>
+      </div>
+      <div class="login-field">
+        <label>סיסמה</label>
+        <input type="password" id="sa-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')superAdminLogin()"/>
+      </div>
+      <div class="login-err" id="sa-err">אימייל או סיסמה שגויים. נסה שוב.</div>
+      <button class="login-submit" style="width:100%;" onclick="superAdminLogin()">כניסת מנהל מערכת →</button>
     </div>
   </div>
 </div>
@@ -623,6 +659,34 @@ body{display:flex;flex-direction:column;overflow:hidden;background:#F0EDE6;}
   </div>
 </div>
 
+<!-- ===================== ORG STATUS (pending/rejected) SCREEN ===================== -->
+<div class="screen" id="screen-org-status">
+  <div style="background:var(--moss);padding:0 24px;height:56px;display:flex;align-items:center;gap:12px;flex-shrink:0;">
+    <button class="back-btn" onclick="logout()">← חזור</button>
+    <div style="color:white;font-weight:800;font-size:16px;">סטטוס ארגון</div>
+  </div>
+  <div style="flex:1;display:flex;align-items:center;justify-content:center;padding:40px;">
+    <div style="text-align:center;max-width:400px;">
+      <div style="font-size:56px;margin-bottom:16px;" id="org-status-icon">⏳</div>
+      <div style="font-size:16px;font-weight:800;color:var(--charcoal);margin-bottom:8px;" id="org-status-title"></div>
+      <div style="font-size:13px;color:var(--light);" id="org-status-desc"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== SUPER ADMIN SCREEN ===================== -->
+<div class="screen" id="screen-superadmin">
+  <div style="background:var(--charcoal);padding:0 24px;height:56px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
+    <div style="color:white;font-weight:800;font-size:16px;">🛠 פאנל מנהל מערכת</div>
+    <button class="btn btn-ghost btn-sm" onclick="superAdminLogout()">יציאה</button>
+  </div>
+  <div style="flex:1;overflow-y:auto;padding:24px;max-width:760px;width:100%;margin:0 auto;">
+    <div style="font-size:14px;font-weight:800;color:var(--charcoal);margin-bottom:4px;">ארגונים רשומים</div>
+    <div style="font-size:12px;color:var(--light);margin-bottom:16px;">אשר, דחה או השבת ארגונים במערכת</div>
+    <div id="superadmin-org-list"></div>
+  </div>
+</div>
+
 </div> <!-- /app-root -->
 
 <!-- ===================== LOGIN MODAL ===================== -->
@@ -891,7 +955,24 @@ function doLogin(){
   if(!org){document.getElementById('login-err').classList.add('show');return;}
   currentOrg=org;
   closeLogin();
+  if(org.status&&org.status!=='approved'){showOrgStatusScreen(org);return;}
   enterAdmin();
+}
+
+function showOrgStatusScreen(org){
+  const icon=document.getElementById('org-status-icon');
+  const title=document.getElementById('org-status-title');
+  const desc=document.getElementById('org-status-desc');
+  if(org.status==='rejected'){
+    icon.textContent='🚫';
+    title.textContent='הבקשה נדחתה';
+    desc.textContent='הרשמת הארגון שלך לא אושרה. ניתן לפנות למנהל המערכת לפרטים נוספים.';
+  }else{
+    icon.textContent='⏳';
+    title.textContent='ממתין לאישור מנהל המערכת';
+    desc.textContent='הארגון שלך נרשם בהצלחה וממתין לאישור. תוכל להתחבר לניהול הכלבים לאחר האישור.';
+  }
+  showScreen('org-status');
 }
 
 function logout(){
@@ -928,6 +1009,7 @@ function authBackToRoles(){
   document.getElementById('auth-body').style.display='none';
   document.getElementById('auth-org-body').style.display='none';
   document.getElementById('auth-org-register').style.display='none';
+  document.getElementById('auth-superadmin-body').style.display='none';
   document.getElementById('auth-header-sub').textContent='איך תרצו להיכנס?';
   document.getElementById('auth-role-choice').style.display='block';
 }
@@ -941,6 +1023,7 @@ function gateOrgLogin(){
     currentOrg=org;
     document.getElementById('auth-gate').classList.add('hidden');
     document.getElementById('app-root').classList.remove('hidden');
+    if(org.status&&org.status!=='approved'){showOrgStatusScreen(org);return;}
     enterAdmin();
   });
 }
@@ -998,15 +1081,120 @@ function submitOrgRegister(){
     let id=name,n=1;
     while(ORGS.some(o=>o.id===id)){n++;id=`${name} ${n}`;}
     const newOrg={id,name,icon:'🏢',cssClass:'org-custom',iconBg:'#EDEAE2',color:'#5A6360',
-      desc:desc||'ארגון רשום עצמאית',email,pass,phone:'',whatsapp:'',facebook:'',contactEmail:email};
+      desc:desc||'ארגון רשום עצמאית',email,pass,phone:'',whatsapp:'',facebook:'',contactEmail:email,
+      status:'pending'};
     ORGS.push(newOrg);
     saveCustomOrg(newOrg);
     currentOrg=newOrg;
     document.getElementById('auth-gate').classList.add('hidden');
     document.getElementById('app-root').classList.remove('hidden');
-    enterAdmin();
-    showToast('🎉 הארגון נרשם בהצלחה!');
+    showOrgStatusScreen(newOrg);
+    showToast('🎉 הארגון נרשם! מחכה לאישור מנהל המערכת');
   });
+}
+
+// ============================================================
+// SUPER ADMIN
+// ============================================================
+const SUPER_ADMIN_EMAIL='admin@example.com';
+const SUPER_ADMIN_PASS='admin123';
+let isSuperAdmin=false;
+
+function authShowSuperAdminLogin(){
+  document.getElementById('auth-role-choice').style.display='none';
+  document.getElementById('auth-header-sub').textContent='כניסת מנהל מערכת';
+  document.getElementById('sa-email').value='';
+  document.getElementById('sa-pass').value='';
+  document.getElementById('sa-err').classList.remove('show');
+  document.getElementById('auth-superadmin-body').style.display='block';
+}
+
+function superAdminLogin(){
+  const email=document.getElementById('sa-email').value.trim().toLowerCase();
+  const pass=document.getElementById('sa-pass').value;
+  if(email!==SUPER_ADMIN_EMAIL||pass!==SUPER_ADMIN_PASS){
+    document.getElementById('sa-err').classList.add('show');return;
+  }
+  document.getElementById('auth-gate').classList.add('hidden');
+  document.getElementById('app-root').classList.remove('hidden');
+  ensureDataLoaded().then(enterSuperAdmin);
+}
+
+function enterSuperAdmin(){
+  isSuperAdmin=true;
+  showScreen('superadmin');
+  renderSuperAdminPanel();
+}
+
+function superAdminLogout(){
+  isSuperAdmin=false;
+  document.getElementById('app-root').classList.add('hidden');
+  document.getElementById('auth-gate').classList.remove('hidden');
+  authBackToRoles();
+}
+
+const SA_STATUS_LABEL={pending:'ממתין לאישור',approved:'מאושר',rejected:'נדחה'};
+
+function renderSuperAdminPanel(){
+  const list=document.getElementById('superadmin-org-list');
+  list.innerHTML='';
+  if(ORGS.length===0){
+    list.innerHTML='<div class="empty-list">אין ארגונים במערכת</div>';
+    return;
+  }
+  ORGS.forEach(org=>{
+    const status=org.status||'approved';
+    const el=document.createElement('div');
+    el.className='sa-org-row';
+    el.innerHTML=`
+      <div class="sa-org-icon" style="background:${org.iconBg}">${org.icon}</div>
+      <div class="sa-org-info">
+        <div class="sa-org-name"></div>
+        <div class="sa-org-meta"></div>
+      </div>
+      <span class="sa-status sa-status-${status}">${SA_STATUS_LABEL[status]}</span>
+      <div class="sa-org-actions"></div>`;
+    el.querySelector('.sa-org-name').textContent=org.name;
+    el.querySelector('.sa-org-meta').textContent=`${org.email} · ${org.desc||''}`;
+    const actions=el.querySelector('.sa-org-actions');
+    if(status==='pending'){
+      actions.appendChild(saButton('✓ אשר','sa-approve',()=>saSetStatus(org.id,'approved')));
+      actions.appendChild(saButton('✕ דחה','sa-reject',()=>saSetStatus(org.id,'rejected')));
+    }else if(status==='approved'){
+      actions.appendChild(saButton('⏸ השבת','sa-suspend',()=>saSetStatus(org.id,'pending')));
+    }else{
+      actions.appendChild(saButton('✓ אשר בכל זאת','sa-approve',()=>saSetStatus(org.id,'approved')));
+    }
+    list.appendChild(el);
+  });
+}
+
+function saButton(label,cls,onClick){
+  const b=document.createElement('button');
+  b.className='sa-btn '+cls;
+  b.textContent=label;
+  b.onclick=onClick;
+  return b;
+}
+
+function saSetStatus(orgId,status){
+  setOrgStatus(orgId,status);
+  renderSuperAdminPanel();
+  showToast(status==='approved'?'✅ הארגון אושר':status==='rejected'?'🚫 הארגון נדחה':'⏸ הארגון הושבת');
+}
+
+function setOrgStatus(orgId,status){
+  const org=ORGS.find(o=>o.id===orgId);
+  if(org)org.status=status;
+  const overrides=JSON.parse(localStorage.getItem('orgStatusOverrides')||'{}');
+  overrides[orgId]=status;
+  localStorage.setItem('orgStatusOverrides',JSON.stringify(overrides));
+  const custom=JSON.parse(localStorage.getItem('customOrgs')||'[]');
+  const idx=custom.findIndex(o=>o.id===orgId);
+  if(idx>-1){
+    custom[idx].status=status;
+    localStorage.setItem('customOrgs',JSON.stringify(custom));
+  }
 }
 
 // ============================================================
@@ -1088,6 +1276,8 @@ function pubRender(){
   let count=0;
   dogs.forEach(dog=>{
     if(dog.status!=='available')return;
+    const shelterStatus=orgInfo(dog.shelter).status;
+    if(shelterStatus&&shelterStatus!=='approved')return;
     if(f.gender.length&&!f.gender.includes(dog.gender))return;
     if(f.size.length&&!f.size.includes(dog.size))return;
     if(f.ageGroup.length&&!f.ageGroup.includes(dog.ageGroup))return;
@@ -1177,6 +1367,8 @@ function renderFavoritesScreen(){
   favs.forEach(dogId=>{
     const dog=dogs.find(d=>d.id===dogId);
     if(!dog)return;
+    const shelterStatus=orgInfo(dog.shelter).status;
+    if(shelterStatus&&shelterStatus!=='approved')return;
     const card=document.createElement('div');
     card.className='dog-card-pub';
     const topTags=dog.personality.slice(0,2).map(p=>`<span class="dct">${p}</span>`).join('');
@@ -1442,6 +1634,8 @@ function ensureDataLoaded(){
   dataLoadPromise=fetch('orgs.json').then(r=>r.json()).then(orgs=>{
     const customOrgs=JSON.parse(localStorage.getItem('customOrgs')||'[]');
     ORGS=orgs.concat(customOrgs);
+    const overrides=JSON.parse(localStorage.getItem('orgStatusOverrides')||'{}');
+    ORGS.forEach(o=>{if(overrides[o.id])o.status=overrides[o.id];});
     genDogs();
     pubPopulateBreeds();
   }).catch(()=>{
